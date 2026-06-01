@@ -1,0 +1,2891 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlphaCount — ระบบบัญชีร้านค้า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F7F5F0;
+    --cream-dark: #EDE9E0;
+    --graphite: #2C2C2C;
+    --graphite-mid: #3E3E3E;
+    --graphite-light: #5A5A5A;
+    --sage: #7A9E7E;
+    --sage-light: #A8C5AB;
+    --sage-dark: #5B8060;
+    --gold: #B8963E;
+    --gold-light: #D4AC5A;
+    --gold-pale: #F0E0B0;
+    --white: #FFFFFF;
+    --error: #C0392B;
+    --shadow-sm: 0 2px 8px rgba(44,44,44,0.08);
+    --shadow-md: 0 4px 20px rgba(44,44,44,0.12);
+    --shadow-lg: 0 8px 40px rgba(44,44,44,0.16);
+    --radius: 10px;
+    --radius-sm: 6px;
+    --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body {
+    font-family: 'DM Sans', 'Noto Sans Thai', sans-serif;
+    background: var(--cream);
+    color: var(--graphite);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--cream-dark); }
+  ::-webkit-scrollbar-thumb { background: var(--sage-light); border-radius: 99px; }
+
+  /* ─── LOGIN SCREEN ─── */
+  #login-screen {
+    position: fixed; inset: 0;
+    background: #111111;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 1000;
+    padding: 2rem;
+    overflow: hidden;
+  }
+  /* Background logo layer */
+  #login-bg-logo {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0; transition: opacity 0.7s ease;
+    pointer-events: none;
+  }
+  #login-bg-logo.has-logo { opacity: 0.22; }
+  #login-bg-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0.85) 100%);
+    pointer-events: none;
+    opacity: 0; transition: opacity 0.7s ease;
+  }
+  #login-bg-overlay.has-logo { opacity: 1; }
+  .login-deco { display: none; }
+
+  /* ─── BRAND BLOCK (top, above card) ─── */
+  .login-brand-block {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.9rem;
+    margin-bottom: 2.4rem;
+    position: relative; z-index: 2;
+  }
+  .login-logo-wrap {
+    width: 80px; height: 80px; border-radius: 22px;
+    overflow: hidden;
+    background: var(--graphite-mid);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: var(--transition);
+    position: relative;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .login-logo-wrap:hover { transform: scale(1.03); }
+  .login-logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  #login-logo-icon {
+    color: var(--sage-light);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.8rem; font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.02em; line-height: 1;
+    text-align: center;
+  }
+  .login-subtitle {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.05em;
+    text-align: center;
+    margin-top: -0.3rem;
+  }
+
+  /* ─── LOGIN CARD (password box) ─── */
+  .login-card {
+    background: rgba(30,30,30,0.95);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 2rem 2rem 1.8rem;
+    max-width: 400px; width: 100%;
+    position: relative; z-index: 2;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .login-pw-label {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.88rem; font-weight: 500;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 1rem;
+  }
+  .login-pw-input {
+    width: 100%; height: 54px;
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    color: rgba(255,255,255,0.85);
+    font-family: inherit; font-size: 1rem;
+    letter-spacing: 0.12em;
+    padding: 0 48px 0 18px;
+    outline: none; transition: var(--transition);
+    -webkit-text-security: disc;
+  }
+  .login-pw-input::placeholder { letter-spacing: 0.18em; color: rgba(255,255,255,0.2); font-size: 0.85rem; }
+  .login-pw-input:focus {
+    border-color: var(--sage-light);
+    background: rgba(255,255,255,0.09);
+  }
+  .login-pw-input.error { border-color: #FF5252; animation: shake 0.35s ease; }
+  @keyframes shake {
+    0%,100%{ transform: translateX(0); }
+    25%{ transform: translateX(-6px); }
+    75%{ transform: translateX(6px); }
+  }
+  .login-pw-wrap { position: relative; margin-bottom: 1rem; }
+  .login-pw-toggle {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    color: rgba(255,255,255,0.3); transition: var(--transition);
+    display: flex; align-items: center;
+    padding: 0;
+  }
+  .login-pw-toggle:hover { color: rgba(255,255,255,0.7); }
+  .login-submit-btn {
+    width: 100%; height: 52px;
+    background: var(--sage);
+    border: none; border-radius: 12px;
+    color: #fff; font-family: inherit;
+    font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: var(--transition);
+    letter-spacing: 0.04em;
+    margin-bottom: 1rem;
+  }
+  .login-submit-btn:hover { background: var(--sage-dark); transform: translateY(-1px); }
+  .login-submit-btn:active { transform: translateY(0); }
+  .login-pw-error {
+    font-size: 0.78rem; color: #FF5252;
+    text-align: center; min-height: 1.2em;
+    margin-bottom: 0.6rem;
+  }
+  .login-footer-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 0.5rem; padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .login-footer-hint {
+    font-size: 0.73rem; color: rgba(255,255,255,0.22);
+  }
+  .login-settings-btn {
+    background: none; border: none;
+    font-family: inherit; font-size: 0.73rem;
+    color: rgba(255,255,255,0.3); cursor: pointer;
+    transition: var(--transition); padding: 0;
+    display: flex; align-items: center; gap: 0.3rem;
+  }
+  .login-settings-btn:hover { color: var(--sage-light); }
+
+  /* account-btn styles kept for settings modal compat */
+  .account-btn { display: none; }
+  .account-avatar, .account-info, .account-arrow, .login-label,
+  .login-divider, .account-btns { display: none; }
+
+  /* ─── LAYOUT SHELL ─── */
+  #app { display: none; min-height: 100vh; }
+  #app.active { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  .app-shell {
+    display: flex; flex: 1; overflow: hidden;
+  }
+
+  /* ─── TOP BAR ─── */
+  .topbar {
+    background: var(--graphite);
+    padding: 0 1.2rem;
+    height: 56px;
+    display: flex; align-items: center; gap: 0.8rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    position: relative; z-index: 300; flex-shrink: 0;
+  }
+  .topbar-brand {
+    display: flex; align-items: center; gap: 0.7rem; flex-shrink: 0;
+  }
+  .topbar-logo {
+    width: 32px; height: 32px; border-radius: 7px;
+    overflow: hidden; background: var(--graphite-mid);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1rem; color: var(--sage);
+    border: 1.5px solid rgba(255,255,255,0.1); flex-shrink: 0;
+  }
+  .topbar-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .topbar-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem; font-weight: 700;
+    color: var(--gold-light); letter-spacing: 0.05em;
+  }
+  .topbar-sep { flex: 1; }
+  .topbar-user {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.8rem; color: rgba(255,255,255,0.65);
+  }
+  .topbar-user-badge {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 0.85rem;
+  }
+  .topbar-user-badge.u1 { background: var(--sage-dark); }
+  .topbar-user-badge.u2 { background: #8B7355; }
+  .topbar-user-badge.u3 { background: #5A6B7A; }
+  .viewer-badge {
+    background: rgba(184,150,62,0.2); color: var(--gold-light);
+    font-size: 0.65rem; padding: 2px 7px; border-radius: 99px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .hamburger {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: none; border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.8); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; transition: var(--transition); flex-shrink: 0;
+  }
+  .hamburger:hover { background: rgba(255,255,255,0.08); border-color: var(--sage-light); }
+  .hamburger span {
+    display: block; width: 16px; height: 2px;
+    background: currentColor; border-radius: 2px;
+    transition: var(--transition);
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+  .hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    width: 240px; flex-shrink: 0;
+    background: var(--graphite);
+    display: flex; flex-direction: column;
+    overflow-y: auto; overflow-x: hidden;
+    transition: width 0.28s cubic-bezier(0.4,0,0.2,1),
+                transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    position: relative; z-index: 200;
+  }
+  .sidebar.collapsed { width: 0; }
+
+  .sidebar-section-label {
+    font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(255,255,255,0.28); padding: 1.2rem 1.2rem 0.4rem;
+    white-space: nowrap; overflow: hidden;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.72rem 1.2rem;
+    font-size: 0.85rem; font-weight: 400;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer; border: none; background: none;
+    text-align: left; white-space: nowrap; overflow: hidden;
+    transition: var(--transition); font-family: inherit;
+    border-left: 3px solid transparent;
+    width: 100%;
+  }
+  .nav-item:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.05); }
+  .nav-item.active {
+    color: var(--white);
+    background: rgba(122,158,126,0.18);
+    border-left-color: var(--sage);
+    font-weight: 500;
+  }
+  .nav-item .nav-icon { font-size: 1.05rem; flex-shrink: 0; width: 20px; text-align: center; }
+  .nav-item .nav-label { flex: 1; }
+  .sidebar-divider {
+    height: 1px; background: rgba(255,255,255,0.07);
+    margin: 0.5rem 1rem;
+  }
+  .sidebar-bottom {
+    margin-top: auto; padding-bottom: 1rem;
+  }
+  .nav-item.danger { color: rgba(192,57,43,0.7); }
+  .nav-item.danger:hover { color: #E74C3C; background: rgba(192,57,43,0.08); }
+
+  /* Sidebar overlay for mobile */
+  .sidebar-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 199;
+  }
+  .sidebar-overlay.visible { display: block; }
+
+  /* ─── MAIN CONTENT ─── */
+  .main-content {
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    background: var(--cream);
+    display: flex; flex-direction: column;
+  }
+
+  /* UNDO BAR */
+  .undo-bar {
+    display: none; align-items: center; gap: 0.8rem;
+    background: var(--graphite-mid); color: rgba(255,255,255,0.85);
+    padding: 0.55rem 1.2rem; font-size: 0.8rem;
+    border-bottom: 2px solid var(--sage); flex-shrink: 0;
+  }
+  .undo-bar.visible { display: flex; }
+  .undo-bar .undo-msg { flex: 1; }
+
+  /* PAGE CONTENT */
+  .page { display: none; padding: 1.5rem; max-width: 1060px; width: 100%; }
+  .page.active { display: block; }
+
+  @media (max-width: 768px) {
+    .sidebar {
+      position: fixed; top: 56px; left: 0; bottom: 0;
+      z-index: 250; transform: translateX(0);
+      box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+    }
+    .sidebar.collapsed { transform: translateX(-100%); width: 240px; }
+    .topbar-title { font-size: 1.15rem; }
+    .page { padding: 1rem; }
+  }
+
+  /* ─── SECTION HEADERS ─── */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.5rem;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem; font-weight: 600;
+    color: var(--graphite);
+  }
+  .section-title span { color: var(--sage-dark); }
+  .section-sub {
+    font-size: 0.78rem; color: var(--graphite-light);
+    margin-top: 2px;
+  }
+  .month-nav {
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .month-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05rem; font-weight: 600;
+    color: var(--gold);
+    min-width: 110px; text-align: center;
+  }
+
+  /* ─── CARDS ─── */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--cream-dark);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .card-head {
+    padding: 1rem 1.3rem;
+    background: var(--graphite);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 0.5rem; flex-wrap: wrap;
+  }
+  .card-head-title {
+    font-size: 0.82rem; font-weight: 500;
+    color: rgba(255,255,255,0.9); letter-spacing: 0.04em;
+    text-transform: uppercase; display: flex; align-items: center; gap: 0.4rem;
+  }
+  .card-head-sub { font-size: 0.75rem; color: rgba(255,255,255,0.45); text-transform: none; letter-spacing: 0; }
+  .card-body { padding: 1.2rem 1.3rem; }
+
+  /* ─── TABLES ─── */
+  .tbl-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  thead th {
+    background: var(--cream); color: var(--graphite-light);
+    padding: 0.6rem 0.8rem; text-align: right;
+    font-weight: 500; font-size: 0.75rem; letter-spacing: 0.04em;
+    border-bottom: 1.5px solid var(--cream-dark); white-space: nowrap;
+  }
+  thead th:first-child { text-align: left; }
+  tbody td {
+    padding: 0.65rem 0.8rem; text-align: right;
+    border-bottom: 1px solid var(--cream-dark);
+    color: var(--graphite);
+  }
+  tbody td:first-child { text-align: left; font-weight: 500; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--cream); }
+  .td-profit { color: var(--sage-dark); font-weight: 600; }
+  .td-remain { color: var(--gold); font-weight: 600; }
+  .td-save { color: var(--graphite-light); }
+  .td-date { color: var(--graphite-light); font-size: 0.78rem; }
+  .td-action { text-align: right !important; }
+  .total-row td {
+    font-weight: 600; background: var(--cream);
+    border-top: 1.5px solid var(--sage-light);
+    color: var(--graphite);
+  }
+  .total-row td:first-child { color: var(--graphite-light); font-size: 0.77rem; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  /* ─── ADD ROW FORM ─── */
+  .add-row-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 0.6rem;
+    padding: 1rem 1.3rem;
+    background: var(--cream);
+    border-top: 1px solid var(--cream-dark);
+    align-items: end;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 3px; }
+  .form-label { font-size: 0.7rem; color: var(--graphite-light); letter-spacing: 0.04em; }
+  .form-input {
+    height: 36px; padding: 0 10px;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    font-family: inherit; font-size: 0.83rem;
+    color: var(--graphite); outline: none;
+    transition: var(--transition);
+  }
+  .form-input:focus { border-color: var(--sage); }
+  .form-input[type=date] { padding: 0 6px; }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 0.4rem; padding: 0 1.2rem; height: 36px;
+    border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 0.82rem; font-weight: 500;
+    cursor: pointer; border: none; transition: var(--transition);
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--sage); color: var(--white); }
+  .btn-primary:hover { background: var(--sage-dark); }
+  .btn-gold { background: var(--gold); color: var(--white); }
+  .btn-gold:hover { background: #9A7B2E; }
+  .btn-outline {
+    background: transparent; border: 1.5px solid var(--cream-dark);
+    color: var(--graphite-light);
+  }
+  .btn-outline:hover { border-color: var(--sage); color: var(--sage-dark); }
+  .btn-danger { background: #FEF2F2; color: var(--error); border: 1px solid #FECACA; }
+  .btn-danger:hover { background: #FEE2E2; }
+  .btn-sm { height: 28px; padding: 0 0.7rem; font-size: 0.75rem; }
+  .btn-icon {
+    width: 28px; height: 28px; padding: 0; border-radius: var(--radius-sm);
+    background: transparent; border: 1px solid var(--cream-dark);
+    color: var(--graphite-light); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: var(--transition); font-size: 0.85rem;
+  }
+  .btn-icon:hover { border-color: var(--error); color: var(--error); background: #FEF2F2; }
+  .btn-icon.undo:hover { border-color: var(--sage); color: var(--sage-dark); background: #F0F7F1; }
+  .btn-icon.nav-month {
+    background: var(--cream); border-color: var(--cream-dark);
+  }
+  .btn-icon.nav-month:hover { border-color: var(--sage); color: var(--sage-dark); background: none; }
+  .btn:disabled, .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+
+  /* ─── SUMMARY CARDS ─── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.8rem; margin-bottom: 1.5rem;
+  }
+  .stat-card {
+    background: var(--white);
+    border: 1px solid var(--cream-dark);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .stat-label { font-size: 0.7rem; color: var(--graphite-light); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.3rem; }
+  .stat-value { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 600; color: var(--graphite); }
+  .stat-value.green { color: var(--sage-dark); }
+  .stat-value.gold { color: var(--gold); }
+  .stat-value.red { color: var(--error); }
+  .stat-sub { font-size: 0.72rem; color: var(--graphite-light); margin-top: 2px; }
+
+  /* ─── WALLET / POOL SECTION ─── */
+  .pool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.2rem; margin-bottom: 1.5rem;
+  }
+  .pool-card {
+    background: var(--white);
+    border: 1px solid var(--cream-dark);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .pool-card-head {
+    padding: 0.9rem 1.2rem;
+    background: var(--graphite);
+    font-size: 0.8rem; font-weight: 500;
+    color: rgba(255,255,255,0.85); letter-spacing: 0.04em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .pool-card-body { padding: 1.2rem; }
+  .pool-big {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem; font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 0.3rem;
+  }
+  .pool-sub { font-size: 0.78rem; color: var(--graphite-light); }
+  .share-row {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--cream-dark);
+    margin-top: 0.7rem; font-size: 0.82rem;
+  }
+  .share-name { flex: 1; color: var(--graphite); }
+  .share-pct { color: var(--graphite-light); font-size: 0.75rem; }
+  .share-amt { font-weight: 600; color: var(--sage-dark); }
+  .share-input-wrap {
+    display: flex; gap: 0.4rem; align-items: center;
+    margin-top: 0.8rem;
+  }
+
+  /* ─── STAFF PAGE ─── */
+  .staff-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem; margin-bottom: 1.5rem;
+  }
+  .staff-card {
+    background: var(--white);
+    border: 1px solid var(--cream-dark);
+    border-radius: var(--radius);
+    padding: 1.2rem;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+  }
+  .staff-card:hover { box-shadow: var(--shadow-md); }
+  .staff-top {
+    display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.8rem;
+  }
+  .staff-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--sage-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; flex-shrink: 0;
+  }
+  .staff-name { font-weight: 600; font-size: 0.93rem; color: var(--graphite); }
+  .staff-rate { font-size: 0.78rem; color: var(--graphite-light); }
+  .staff-week-total {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem; font-weight: 600; color: var(--gold);
+  }
+  .staff-week-label { font-size: 0.73rem; color: var(--graphite-light); }
+  .incentive-box {
+    background: linear-gradient(135deg, var(--gold-pale), #FFF8E7);
+    border: 1.5px solid var(--gold-light);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.2rem;
+    display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;
+  }
+  .incentive-icon { font-size: 1.6rem; }
+  .incentive-text { flex: 1; }
+  .incentive-title { font-weight: 600; color: var(--gold); font-size: 0.88rem; }
+  .incentive-desc { font-size: 0.76rem; color: var(--graphite-light); }
+
+  .staff-week-row {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 3px 0.5rem;
+    margin-top: 0.5rem; font-size: 0.78rem;
+  }
+  .swday { color: var(--graphite-light); }
+  .swamt { color: var(--sage-dark); font-weight: 500; text-align: right; }
+
+  /* ─── ACTIVITY LOG ─── */
+  .log-entry {
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--cream-dark);
+    font-size: 0.78rem; line-height: 1.5;
+    display: flex; gap: 0.6rem; align-items: flex-start;
+  }
+  .log-entry:last-child { border-bottom: none; }
+  .log-time { color: var(--graphite-light); white-space: nowrap; flex-shrink: 0; font-size: 0.72rem; }
+  .log-user { color: var(--sage-dark); font-weight: 600; flex-shrink: 0; }
+  .log-action { color: var(--graphite); }
+  .log-scroll { max-height: 280px; overflow-y: auto; }
+
+  /* ─── EXPENSE BREAKDOWN ─── */
+  .exp-bar { height: 8px; border-radius: 99px; background: var(--cream-dark); overflow: hidden; margin-top: 4px; }
+  .exp-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+
+  /* ─── MISC ─── */
+  .badge {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 99px; font-size: 0.68rem; font-weight: 500;
+  }
+  .badge-sage { background: #E8F3E9; color: var(--sage-dark); }
+  .badge-gold { background: var(--gold-pale); color: #7A6020; }
+  .badge-red { background: #FEE2E2; color: var(--error); }
+  .badge-gray { background: var(--cream-dark); color: var(--graphite-light); }
+
+  .inline-row { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+  .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--graphite-light); font-size: 0.85rem; }
+  .empty-state .empty-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+  @media (max-width: 680px) {
+    .two-col { grid-template-columns: 1fr; }
+    .login-card { padding: 2rem 1.5rem; }
+    .page { padding: 1rem; }
+    .topbar-title { font-size: 1.2rem; }
+  }
+
+  /* ─── TOAST ─── */
+  #toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: var(--graphite);
+    color: var(--white); padding: 0.7rem 1.2rem;
+    border-radius: var(--radius-sm); font-size: 0.82rem;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(20px); opacity: 0;
+    transition: 0.3s ease; z-index: 9999;
+    pointer-events: none; max-width: 320px;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-left: 3px solid var(--sage); }
+  #toast.error { border-left: 3px solid var(--error); }
+  #toast.info { border-left: 3px solid var(--gold); }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(2px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 500; padding: 1rem;
+    opacity: 0; pointer-events: none; transition: 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--white); border-radius: var(--radius);
+    padding: 1.8rem; max-width: 420px; width: 100%;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(12px); transition: 0.2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; color: var(--graphite); margin-bottom: 0.5rem; }
+  .modal-desc { font-size: 0.82rem; color: var(--graphite-light); margin-bottom: 1.4rem; }
+  .modal-actions { display: flex; gap: 0.7rem; justify-content: flex-end; margin-top: 1.2rem; }
+
+  /* upload hidden input */
+  #logo-upload { display: none; }
+
+  /* Dashboard chart-ish bars */
+  .dash-bar-row { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.5rem; }
+  .dash-bar-label { font-size: 0.78rem; color: var(--graphite-light); width: 90px; flex-shrink: 0; }
+  .dash-bar-track { flex: 1; height: 10px; background: var(--cream-dark); border-radius: 99px; overflow: hidden; }
+  .dash-bar-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+  .dash-bar-val { font-size: 0.8rem; font-weight: 600; color: var(--graphite); width: 80px; text-align: right; flex-shrink: 0; }
+
+  .confirm-dist-box {
+    background: linear-gradient(135deg, #E8F3E9, var(--white));
+    border: 1.5px solid var(--sage-light);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .tip-row {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.78rem; color: var(--graphite-light);
+    padding: 0.4rem 0;
+  }
+
+  .carryover-note {
+    background: var(--gold-pale); border-left: 3px solid var(--gold);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 0.5rem 0.8rem; font-size: 0.77rem; color: #7A6020;
+    margin-bottom: 0.8rem;
+  }
+
+  .undo-bar {
+    display: none; align-items: center; gap: 0.8rem;
+    background: var(--graphite-mid); color: rgba(255,255,255,0.85);
+    padding: 0.6rem 1.2rem; font-size: 0.8rem;
+    border-top: 2px solid var(--sage);
+  }
+  .undo-bar.visible { display: flex; }
+  .undo-bar .undo-msg { flex: 1; }
+
+  input[type="file"] { display: none; }
+
+  /* ─── ACCOUNT SETTINGS MODAL ─── */
+  .acct-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1100; padding: 1rem;
+    opacity: 0; pointer-events: none; transition: 0.22s;
+  }
+  .acct-modal-overlay.open { opacity: 1; pointer-events: all; }
+  .acct-modal {
+    background: var(--white); border-radius: 16px;
+    padding: 2rem 2.2rem; max-width: 500px; width: 100%;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(14px); transition: 0.22s;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .acct-modal-overlay.open .acct-modal { transform: translateY(0); }
+  .acct-modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem; font-weight: 700; color: var(--graphite);
+    margin-bottom: 0.3rem;
+  }
+  .acct-modal-sub { font-size: 0.78rem; color: var(--graphite-light); margin-bottom: 1.6rem; }
+  .acct-block {
+    border: 1.5px solid var(--cream-dark);
+    border-radius: var(--radius);
+    overflow: hidden; margin-bottom: 1rem;
+  }
+  .acct-block-head {
+    background: var(--cream); padding: 0.65rem 1rem;
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--graphite-light);
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .acct-block-body { padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+  .acct-field { display: flex; flex-direction: column; gap: 4px; }
+  .acct-label { font-size: 0.72rem; color: var(--graphite-light); letter-spacing: 0.04em; }
+  .acct-input {
+    height: 38px; padding: 0 12px;
+    border: 1.5px solid var(--cream-dark); border-radius: var(--radius-sm);
+    background: var(--cream); font-family: inherit; font-size: 0.88rem;
+    color: var(--graphite); outline: none; transition: var(--transition);
+    width: 100%;
+  }
+  .acct-input:focus { border-color: var(--sage); background: var(--white); }
+  .acct-input.has-pw { letter-spacing: 0.12em; font-size: 1rem; }
+  .acct-row { display: flex; gap: 0.6rem; align-items: flex-end; }
+  .acct-row .acct-field { flex: 1; }
+  .acct-save-row {
+    display: flex; justify-content: flex-end; gap: 0.6rem;
+    margin-top: 0.5rem; padding-top: 1rem;
+    border-top: 1px solid var(--cream-dark);
+  }
+  .acct-badge-preview {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+  }
+  .pw-toggle {
+    background: none; border: none; cursor: pointer;
+    color: var(--graphite-light); font-size: 0.85rem;
+    padding: 0 4px; transition: var(--transition);
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  }
+  .pw-toggle:hover { color: var(--sage-dark); }
+  .pw-wrap { position: relative; }
+  .pw-wrap .acct-input { padding-right: 32px; }
+  .acct-info-row {
+    display: flex; align-items: center; gap: 0.7rem;
+    padding: 0.5rem 0.8rem;
+    background: var(--gold-pale); border-radius: var(--radius-sm);
+    font-size: 0.76rem; color: #7A6020;
+    margin-bottom: 0.2rem;
+  }
+
+  /* ─── ADMIN SETTINGS PAGE ─── */
+  .settings-section { margin-bottom: 1.8rem; }
+  .settings-section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem; font-weight: 600; color: var(--graphite);
+    margin-bottom: 0.9rem;
+    display: flex; align-items: center; gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+  .settings-section-title svg { color: var(--sage-dark); flex-shrink: 0; }
+  .staff-settings-list { display: flex; flex-direction: column; gap: 0.55rem; margin-bottom: 0.9rem; }
+  .staff-settings-row {
+    display: flex; align-items: center; gap: 0.6rem;
+    background: var(--cream); border: 1px solid var(--cream-dark);
+    border-radius: var(--radius-sm); padding: 0.5rem 0.75rem;
+    transition: var(--transition);
+  }
+  .staff-settings-row:hover { border-color: var(--sage-light); }
+  .staff-sn-input {
+    flex: 1; height: 32px; padding: 0 8px;
+    border: 1.5px solid var(--cream-dark); border-radius: var(--radius-sm);
+    background: var(--white); font-family: inherit; font-size: 0.88rem;
+    color: var(--graphite); outline: none; transition: var(--transition);
+  }
+  .staff-sn-input:focus { border-color: var(--sage); }
+  .staff-rate-input {
+    width: 86px; height: 32px; padding: 0 8px;
+    border: 1.5px solid var(--cream-dark); border-radius: var(--radius-sm);
+    background: var(--white); font-family: inherit; font-size: 0.88rem;
+    color: var(--graphite); outline: none; transition: var(--transition); text-align: right;
+  }
+  .staff-rate-input:focus { border-color: var(--sage); }
+  .rate-unit { font-size: 0.72rem; color: var(--graphite-light); white-space: nowrap; flex-shrink: 0; }
+  .cat-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.9rem; }
+  .cat-tag {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    background: var(--cream); border: 1.5px solid var(--cream-dark);
+    border-radius: 99px; padding: 0.3rem 0.6rem 0.3rem 0.85rem;
+    font-size: 0.82rem; color: var(--graphite); transition: var(--transition);
+  }
+  .cat-tag:hover { border-color: var(--sage-light); }
+  .cat-tag-del {
+    background: none; border: none; cursor: pointer;
+    color: var(--graphite-light); padding: 0;
+    width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; transition: var(--transition); font-size: 0.9rem; line-height: 1;
+  }
+  .cat-tag-del:hover { background: #FEE2E2; color: var(--error); }
+  .cat-add-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  .share-settings-grid { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.9rem; }
+  .share-settings-row {
+    display: flex; align-items: center; gap: 0.8rem;
+    background: var(--cream); border: 1px solid var(--cream-dark);
+    border-radius: var(--radius-sm); padding: 0.6rem 0.8rem;
+  }
+  .share-settings-label { flex: 1; font-size: 0.88rem; color: var(--graphite); font-weight: 500; }
+  .share-pct-input {
+    width: 72px; height: 34px; padding: 0 8px;
+    border: 1.5px solid var(--cream-dark); border-radius: var(--radius-sm);
+    background: var(--white); font-family: inherit; font-size: 0.92rem;
+    color: var(--graphite); outline: none; transition: var(--transition); text-align: right;
+  }
+  .share-pct-input:focus { border-color: var(--sage); }
+  .share-pct-unit { font-size: 0.8rem; color: var(--graphite-light); }
+  .share-pct-sum { font-size: 0.8rem; padding: 0.3rem 0.8rem; border-radius: 99px; font-weight: 600; }
+  .share-pct-sum.ok { background: #E8F3E9; color: var(--sage-dark); }
+  .share-pct-sum.bad { background: #FEE2E2; color: var(--error); }
+  .share-preview-box {
+    background: var(--gold-pale); border: 1px solid var(--gold-light);
+    border-radius: var(--radius-sm); padding: 0.7rem 1rem;
+    font-size: 0.82rem; color: #7A6020;
+    display: flex; gap: 1.4rem; flex-wrap: wrap; align-items: center; margin-top: 0.5rem;
+  }
+  .share-preview-item { display: flex; flex-direction: column; gap: 1px; }
+  .share-preview-name { font-size: 0.7rem; opacity: 0.7; }
+  .share-preview-amt { font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 700; }
+  .settings-save-bar {
+    position: sticky; bottom: 0;
+    background: var(--white); border-top: 1px solid var(--cream-dark);
+    padding: 0.9rem 1.5rem; margin: 0 -1.5rem -1.5rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.06); z-index: 10;
+  }
+  .settings-save-hint { font-size: 0.76rem; color: var(--graphite-light); }
+</style>
+</head>
+<body>
+
+<input type="file" id="logo-upload" accept="image/*">
+
+<!-- ─── LOGIN SCREEN ─── -->
+<div id="login-screen">
+  <div id="login-bg-logo"></div>
+  <div id="login-bg-overlay"></div>
+  <div class="login-deco" id="login-deco"></div>
+
+  <!-- Brand block above card -->
+  <div class="login-brand-block">
+    <div class="login-logo-wrap" id="login-logo-btn" title="คลิกเพื่ออัปโหลดโลโก้">
+      <span id="login-logo-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      <img id="login-logo-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
+    </div>
+    <div class="login-title">Alpha</div>
+    <div class="login-subtitle">ระบบจัดการบัญชี</div>
+  </div>
+
+  <!-- Password card -->
+  <div class="login-card">
+    <div class="login-pw-label">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      กรุณาใส่รหัสเพื่อเข้าสู่ระบบ
+    </div>
+    <div class="login-pw-wrap">
+      <input type="password" id="main-pw-input" class="login-pw-input" placeholder="กรุณาใส่รหัส" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitPassword()">
+      <button class="login-pw-toggle" type="button" id="main-pw-toggle" onclick="toggleMainPw()">
+        <svg id="main-eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <div class="login-pw-error" id="main-pw-error"></div>
+    <button class="login-submit-btn" onclick="submitPassword()">เข้าสู่ระบบ</button>
+    <div class="login-footer-row">
+      <span class="login-footer-hint">หากลืมรหัสผ่านกรุณาติดต่อเจ้าของร้าน</span>
+      <button class="login-settings-btn" onclick="openAcctSettings()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        ตั้งค่า
+      </button>
+    </div>
+  </div>
+
+  <!-- hidden compat elements -->
+  <div id="account-btns" style="display:none"></div>
+  <div id="pin-prompt" style="display:none"></div>
+</div>
+
+<!-- ─── ACCOUNT SETTINGS MODAL ─── -->
+<div class="acct-modal-overlay" id="acct-modal-overlay">
+  <div class="acct-modal">
+    <div class="acct-modal-title">ตั้งค่าบัญชีผู้ใช้</div>
+    <div class="acct-modal-sub">แก้ไขชื่อบัญชีและรหัสผ่านได้ตามต้องการ (บันทึกลง Local Storage)</div>
+    <div class="acct-info-row">
+      — รหัสผ่านที่ตั้ง จะเปิดใช้งานทันที — หากไม่ต้องการรหัสผ่านให้ปล่อยว่างไว้
+    </div>
+
+    <!-- Owner 1 -->
+    <div class="acct-block">
+      <div class="acct-block-head"><span style="width:14px;height:14px;border-radius:50%;background:var(--sage-light);display:inline-block"></span> บัญชีเจ้าของ 1</div>
+      <div class="acct-block-body">
+        <div class="acct-row">
+          <div class="acct-field">
+            <label class="acct-label">ชื่อที่แสดง</label>
+            <input type="text" class="acct-input" id="as-name1" placeholder="เจ้าของ 1">
+          </div>
+        </div>
+        <div class="acct-row">
+          <div class="acct-field">
+            <label class="acct-label">รหัสผ่านใหม่ (ว่าง = ไม่ต้องใส่รหัส)</label>
+            <div class="pw-wrap">
+              <input type="password" class="acct-input has-pw" id="as-pw1" placeholder="ตั้งรหัสผ่าน...">
+              <button class="pw-toggle" type="button" onclick="togglePwVis('as-pw1',this)"><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/></svg></button>
+            </div>
+          </div>
+          <div class="acct-field">
+            <label class="acct-label">ยืนยันรหัสผ่าน</label>
+            <div class="pw-wrap">
+              <input type="password" class="acct-input has-pw" id="as-pw1c" placeholder="ยืนยัน...">
+              <button class="pw-toggle" type="button" onclick="togglePwVis('as-pw1c',this)"><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/></svg></button>
+            </div>
+          </div>
+        </div>
+        <div id="as-err1" style="font-size:0.74rem;color:var(--error);display:none"></div>
+      </div>
+    </div>
+
+    <!-- Owner 2 -->
+    <div class="acct-block">
+      <div class="acct-block-head"><span style="width:14px;height:14px;border-radius:50%;background:var(--gold-pale);display:inline-block"></span> บัญชีเจ้าของ 2</div>
+      <div class="acct-block-body">
+        <div class="acct-row">
+          <div class="acct-field">
+            <label class="acct-label">ชื่อที่แสดง</label>
+            <input type="text" class="acct-input" id="as-name2" placeholder="เจ้าของ 2">
+          </div>
+        </div>
+        <div class="acct-row">
+          <div class="acct-field">
+            <label class="acct-label">รหัสผ่านใหม่ (ว่าง = ไม่ต้องใส่รหัส)</label>
+            <div class="pw-wrap">
+              <input type="password" class="acct-input has-pw" id="as-pw2" placeholder="ตั้งรหัสผ่าน...">
+              <button class="pw-toggle" type="button" onclick="togglePwVis('as-pw2',this)"><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/></svg></button>
+            </div>
+          </div>
+          <div class="acct-field">
+            <label class="acct-label">ยืนยันรหัสผ่าน</label>
+            <div class="pw-wrap">
+              <input type="password" class="acct-input has-pw" id="as-pw2c" placeholder="ยืนยัน...">
+              <button class="pw-toggle" type="button" onclick="togglePwVis('as-pw2c',this)"><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/></svg></button>
+            </div>
+          </div>
+        </div>
+        <div id="as-err2" style="font-size:0.74rem;color:var(--error);display:none"></div>
+      </div>
+    </div>
+
+    <!-- Viewer -->
+    <div class="acct-block">
+      <div class="acct-block-head"><span style="width:14px;height:14px;border-radius:50%;background:var(--cream-dark);display:inline-block"></span> บัญชี 3</div>
+      <div class="acct-block-body">
+        <div class="acct-row">
+          <div class="acct-field">
+            <label class="acct-label">ชื่อที่แสดง</label>
+            <input type="text" class="acct-input" id="as-name3" placeholder="ผู้ดู">
+          </div>
+        </div>
+        <div class="acct-row">
+          <div class="acct-field">
+            <label class="acct-label">รหัสผ่านใหม่ (ว่าง = ไม่ต้องใส่รหัส)</label>
+            <div class="pw-wrap">
+              <input type="password" class="acct-input has-pw" id="as-pw3" placeholder="ตั้งรหัสผ่าน...">
+              <button class="pw-toggle" type="button" onclick="togglePwVis('as-pw3',this)"><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/></svg></button>
+            </div>
+          </div>
+          <div class="acct-field">
+            <label class="acct-label">ยืนยันรหัสผ่าน</label>
+            <div class="pw-wrap">
+              <input type="password" class="acct-input has-pw" id="as-pw3c" placeholder="ยืนยัน...">
+              <button class="pw-toggle" type="button" onclick="togglePwVis('as-pw3c',this)"><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/></svg></button>
+            </div>
+          </div>
+        </div>
+        <div id="as-err3" style="font-size:0.74rem;color:var(--error);display:none"></div>
+      </div>
+    </div>
+
+    <div class="acct-save-row">
+      <button class="btn btn-outline" onclick="closeAcctSettings()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveAcctSettings()">บันทึกการตั้งค่า</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MAIN APP ─── -->
+<div id="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="topbar-brand">
+      <div class="topbar-logo" id="topbar-logo-btn" title="คลิกเพื่ออัปโหลดโลโก้">
+        <span id="topbar-logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+        <img id="topbar-logo-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
+      </div>
+      <div class="topbar-title">AlphaCount</div>
+    </div>
+    <div class="topbar-sep"></div>
+    <div id="viewer-badge-wrap"></div>
+    <div class="topbar-user">
+      <div class="topbar-user-badge" id="topbar-badge"></div>
+      <span id="topbar-username"></span>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <!-- SIDEBAR -->
+    <div class="sidebar collapsed" id="sidebar">
+      <div class="sidebar-section-label">เมนูหลัก</div>
+      <button class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+        <span class="nav-label">Dashboard</span>
+      </button>
+      <button class="nav-item" data-tab="somtam" onclick="switchTab('somtam')">
+        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg></span>
+        <span class="nav-label">ฝั่งส้มตำ</span>
+      </button>
+      <button class="nav-item" data-tab="grocery" onclick="switchTab('grocery')">
+        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+        <span class="nav-label">ฝั่งของชำ</span>
+      </button>
+      <button class="nav-item" data-tab="wallet" onclick="switchTab('wallet')">
+        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><circle cx="17" cy="16" r="1" fill="currentColor"/></svg></span>
+        <span class="nav-label">กระเป๋าเงิน</span>
+      </button>
+      <button class="nav-item" data-tab="staff" onclick="switchTab('staff')">
+        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        <span class="nav-label">พนักงาน</span>
+      </button>
+      <button class="nav-item" data-tab="log" onclick="switchTab('log')">
+        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
+        <span class="nav-label">ประวัติ</span>
+      </button>
+
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section-label">การจัดการ</div>
+      <button class="nav-item" data-tab="settings" onclick="switchTab('settings')">
+        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+        <span class="nav-label">ตั้งค่าระบบ</span>
+      </button>
+      <button class="nav-item" onclick="openAcctSettings();closeSidebarMobile()">
+        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+        <span class="nav-label">ตั้งค่าบัญชีผู้ใช้</span>
+      </button>
+      <button class="nav-item" onclick="exportData();closeSidebarMobile()">
+        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+        <span class="nav-label">Export ข้อมูล</span>
+      </button>
+      <button class="nav-item" onclick="triggerImport();closeSidebarMobile()">
+        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+        <span class="nav-label">Import ข้อมูล</span>
+      </button>
+      <button class="nav-item" onclick="triggerLogo();closeSidebarMobile()">
+        <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>
+        <span class="nav-label">เปลี่ยนโลโก้ร้าน</span>
+      </button>
+
+      <div class="sidebar-bottom">
+        <div class="sidebar-divider"></div>
+        <button class="nav-item danger" onclick="logout()">
+          <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+          <span class="nav-label">ออกจากระบบ</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Overlay for mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content" id="main-content">
+      <!-- UNDO BAR -->
+      <div class="undo-bar" id="undo-bar">
+        <span class="undo-msg" id="undo-msg">มีการกระทำที่สามารถย้อนกลับได้</span>
+        <button class="btn btn-sm btn-outline" style="color:var(--sage-light);border-color:var(--sage-light)" onclick="doUndo()"> Undo ย้อนกลับ</button>
+      </div>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)">
+
+  <!-- ─── DASHBOARD ─── -->
+  <div class="page active" id="page-dashboard">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Dashboard <span>สรุปภาพรวม</span></div>
+        <div class="section-sub" id="dash-month-label">กำลังโหลด...</div>
+      </div>
+      <div class="month-nav">
+        <button class="btn-icon nav-month" onclick="changeMonth(-1)">‹</button>
+        <div class="month-label" id="dash-month-nav">—</div>
+        <button class="btn-icon nav-month" onclick="changeMonth(1)">›</button>
+      </div>
+    </div>
+    <!-- Stat row -->
+    <div class="stat-row" id="dash-stats"></div>
+    <!-- Two col: expense breakdown + recent -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><div class="card-head-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> รายจ่ายส่วนกลางเดือนนี้</div></div>
+        <div class="card-body" id="dash-expense-breakdown"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-head-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> สรุปยอดขาย</div></div>
+        <div class="card-body" id="dash-sales-summary"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-head-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><circle cx="17" cy="16" r="1" fill="currentColor"/></svg> กระเป๋าเงินรวม</div></div>
+      <div class="card-body" id="dash-wallet-summary"></div>
+    </div>
+  </div>
+
+  <!-- ─── SOMTAM PAGE ─── -->
+  <div class="page" id="page-somtam">
+    <div class="section-header">
+      <div>
+        <div class="section-title">ฝั่ง<span>ส้มตำ</span></div>
+        <div class="section-sub">บันทึกรายรับ–รายจ่ายประจำวัน</div>
+      </div>
+      <div class="month-nav">
+        <button class="btn-icon nav-month" onclick="changeMonth(-1)">‹</button>
+        <div class="month-label" id="somtam-month-nav">—</div>
+        <button class="btn-icon nav-month" onclick="changeMonth(1)">›</button>
+      </div>
+    </div>
+    <div id="somtam-carryover" class="carryover-note" style="display:none"></div>
+    <div class="card" id="somtam-card">
+      <div class="card-head">
+        <div>
+          <div class="card-head-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> ตารางบัญชีรายวัน</div>
+          <div class="card-head-sub" id="somtam-card-sub">—</div>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table id="somtam-table">
+          <thead>
+            <tr>
+              <th>วันที่</th>
+              <th>รายรับ</th>
+              <th>รายจ่าย</th>
+              <th>กำไร</th>
+              <th>ยอดยกมา</th>
+              <th>คงเหลือก่อนเก็บ</th>
+              <th>เงินเก็บ</th>
+              <th>คงเหลือหลังเก็บ</th>
+              <th class="td-action"></th>
+            </tr>
+          </thead>
+          <tbody id="somtam-tbody"></tbody>
+          <tfoot id="somtam-tfoot"></tfoot>
+        </table>
+      </div>
+      <div class="add-row-form" id="somtam-form">
+        <div class="form-group">
+          <label class="form-label">วันที่</label>
+          <input type="date" class="form-input" id="s-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">รายรับ (฿)</label>
+          <input type="number" class="form-input" id="s-income" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">รายจ่าย (฿)</label>
+          <input type="number" class="form-input" id="s-expense" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">เงินเก็บ (฿)</label>
+          <input type="number" class="form-input" id="s-save" placeholder="0" min="0">
+        </div>
+        <div class="form-group" style="align-self:end">
+          <button class="btn btn-primary" onclick="addSomtamRow()">+ บันทึก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── GROCERY PAGE ─── -->
+  <div class="page" id="page-grocery">
+    <div class="section-header">
+      <div>
+        <div class="section-title">ฝั่ง<span>ของชำ</span></div>
+        <div class="section-sub">บันทึกรายรับ–รายจ่ายประจำวัน</div>
+      </div>
+      <div class="month-nav">
+        <button class="btn-icon nav-month" onclick="changeMonth(-1)">‹</button>
+        <div class="month-label" id="grocery-month-nav">—</div>
+        <button class="btn-icon nav-month" onclick="changeMonth(1)">›</button>
+      </div>
+    </div>
+    <div id="grocery-carryover" class="carryover-note" style="display:none"></div>
+    <div class="card" id="grocery-card">
+      <div class="card-head">
+        <div>
+          <div class="card-head-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> ตารางบัญชีรายวัน</div>
+          <div class="card-head-sub" id="grocery-card-sub">—</div>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table id="grocery-table">
+          <thead>
+            <tr>
+              <th>วันที่</th>
+              <th>รายรับ</th>
+              <th>รายจ่าย</th>
+              <th>กำไร</th>
+              <th>ยอดยกมา</th>
+              <th>คงเหลือก่อนเก็บ</th>
+              <th>เงินเก็บ</th>
+              <th>คงเหลือหลังเก็บ</th>
+              <th class="td-action"></th>
+            </tr>
+          </thead>
+          <tbody id="grocery-tbody"></tbody>
+          <tfoot id="grocery-tfoot"></tfoot>
+        </table>
+      </div>
+      <div class="add-row-form" id="grocery-form">
+        <div class="form-group">
+          <label class="form-label">วันที่</label>
+          <input type="date" class="form-input" id="g-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">รายรับ (฿)</label>
+          <input type="number" class="form-input" id="g-income" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">รายจ่าย (฿)</label>
+          <input type="number" class="form-input" id="g-expense" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">เงินเก็บ (฿)</label>
+          <input type="number" class="form-input" id="g-save" placeholder="0" min="0">
+        </div>
+        <div class="form-group" style="align-self:end">
+          <button class="btn btn-primary" onclick="addGroceryRow()">+ บันทึก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── WALLET PAGE ─── -->
+  <div class="page" id="page-wallet">
+    <div class="section-header">
+      <div>
+        <div class="section-title">กระเป๋า<span>เงิน</span></div>
+        <div class="section-sub">เงินเก็บรวม, รายจ่ายส่วนกลาง, เงินสะสมปันผล</div>
+      </div>
+      <div class="month-nav">
+        <button class="btn-icon nav-month" onclick="changeMonth(-1)">‹</button>
+        <div class="month-label" id="wallet-month-nav">—</div>
+        <button class="btn-icon nav-month" onclick="changeMonth(1)">›</button>
+      </div>
+    </div>
+
+    <div class="pool-grid">
+      <!-- Pool Total -->
+      <div class="pool-card">
+        <div class="pool-card-head"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><circle cx="17" cy="16" r="1" fill="currentColor"/></svg> เงินเก็บรวม (กองกลาง)</div>
+        <div class="pool-card-body">
+          <div class="pool-big" id="pool-total-val">฿0</div>
+          <div class="pool-sub">ยอดสะสมจากส้มตำ + ของชำ</div>
+          <div class="tip-row"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> ยกมาจากเดือนก่อน: <strong id="pool-carried-val">฿0</strong></div>
+          <div class="tip-row"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 13 12 17 16 13"/><line x1="12" y1="6" x2="12" y2="17"/></svg> ไหลเข้าเดือนนี้: <strong id="pool-inflow-val">฿0</strong></div>
+          <div class="tip-row"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 11 12 7 16 11"/><line x1="12" y1="17" x2="12" y2="7"/></svg> จ่ายออกเดือนนี้: <strong id="pool-outflow-val">฿0</strong></div>
+        </div>
+      </div>
+      <!-- Savings Pool -->
+      <div class="pool-card">
+        <div class="pool-card-head"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> เงินออมสะสม (ปันผล)</div>
+        <div class="pool-card-body">
+          <div class="pool-big" id="savings-total-val">฿0</div>
+          <div class="pool-sub">สะสมทบไปเรื่อยๆ รอปันผล</div>
+          <div class="share-input-wrap">
+            <input type="number" class="form-input" id="savings-add-input" placeholder="ดึงเงินสะสม (฿)" min="0" style="flex:1">
+            <button class="btn btn-primary btn-sm" onclick="addSavings()">+ เพิ่ม</button>
+          </div>
+          <div id="savings-shares" style="margin-top:0.5rem"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Share settings -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> สัดส่วนหุ้นส่วน</div>
+      </div>
+      <div class="card-body">
+        <div class="inline-row" style="margin-bottom:1rem">
+          <div class="form-group">
+            <label class="form-label">เจ้าของ 1 (%)</label>
+            <input type="number" class="form-input" id="share-pct1" value="50" min="0" max="100" onchange="saveSharePct()" style="width:90px">
+          </div>
+          <div style="font-size:1.2rem;color:var(--graphite-light);padding-top:18px">+</div>
+          <div class="form-group">
+            <label class="form-label">เจ้าของ 2 (%)</label>
+            <input type="number" class="form-input" id="share-pct2" value="50" min="0" max="100" onchange="saveSharePct()" style="width:90px">
+          </div>
+          <div style="font-size:0.8rem;color:var(--graphite-light);padding-top:18px" id="pct-sum-note"></div>
+        </div>
+        <div class="confirm-dist-box" id="confirm-dist-box">
+          <div class="inline-row">
+            <div style="flex:1">
+              <div style="font-weight:600;color:var(--sage-dark);font-size:0.88rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ยืนยันแบ่งเงินจริง</div>
+              <div style="font-size:0.76rem;color:var(--graphite-light)">ตัดยอดสะสมปันผลเป็น ฿0 เมื่อทุกคนพร้อมรับเงิน</div>
+              <div id="confirm-dist-amounts" style="margin-top:0.5rem;font-size:0.82rem"></div>
+            </div>
+            <button class="btn btn-gold btn-sm" onclick="confirmDistribution()">แบ่งเงินจริง</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Central Expenses -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> รายจ่ายส่วนกลาง</div>
+      </div>
+      <div class="tbl-wrap">
+        <table id="expense-table">
+          <thead>
+            <tr>
+              <th>วันที่</th>
+              <th>ประเภท</th>
+              <th>รายละเอียด</th>
+              <th>จำนวน (฿)</th>
+              <th class="td-action"></th>
+            </tr>
+          </thead>
+          <tbody id="expense-tbody"></tbody>
+        </table>
+      </div>
+      <div class="add-row-form">
+        <div class="form-group">
+          <label class="form-label">วันที่</label>
+          <input type="date" class="form-input" id="exp-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ประเภท</label>
+          <select class="form-input" id="exp-type" style="height:36px"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">รายละเอียด</label>
+          <input type="text" class="form-input" id="exp-desc" placeholder="รายละเอียด">
+        </div>
+        <div class="form-group">
+          <label class="form-label">จำนวน (฿)</label>
+          <input type="number" class="form-input" id="exp-amount" placeholder="0" min="0">
+        </div>
+        <div class="form-group" style="align-self:end">
+          <button class="btn btn-primary" onclick="addExpense()">+ บันทึก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── STAFF PAGE ─── -->
+  <div class="page" id="page-staff">
+    <div class="section-header">
+      <div>
+        <div class="section-title">จัดการ<span>พนักงาน</span></div>
+        <div class="section-sub">ค่าจ้างรายอาทิตย์ + เบี้ยขยัน</div>
+      </div>
+      <div class="month-nav">
+        <button class="btn-icon nav-month" onclick="changeMonth(-1)">‹</button>
+        <div class="month-label" id="staff-month-nav">—</div>
+        <button class="btn-icon nav-month" onclick="changeMonth(1)">›</button>
+      </div>
+    </div>
+
+    <!-- Incentive Box -->
+    <div class="incentive-box" id="incentive-box" style="display:none">
+      <div class="incentive-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gold)"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></div>
+      <div class="incentive-text">
+        <div class="incentive-title">เบี้ยขยันประจำเดือน — ฿500 ต่อคน</div>
+        <div class="incentive-desc">เลือกพนักงานที่ไม่มีประวัติสายหรือลาเดือนนี้</div>
+      </div>
+    </div>
+    <div id="incentive-checks" style="display:none;margin-bottom:1.2rem"></div>
+
+    <div class="staff-grid" id="staff-grid"></div>
+
+    <!-- Weekly wage log -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> ประวัติการจ่ายเงินประจำสัปดาห์</div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>รอบ (อาทิตย์)</th>
+              <th>ชื่อพนักงาน</th>
+              <th>วันทำงาน</th>
+              <th>อัตรา/วัน</th>
+              <th>รวม (฿)</th>
+              <th>เบี้ยขยัน</th>
+              <th>ยอดจ่ายจริง</th>
+              <th class="td-action"></th>
+            </tr>
+          </thead>
+          <tbody id="wage-tbody"></tbody>
+        </table>
+      </div>
+      <!-- Add wage record -->
+      <div class="add-row-form">
+        <div class="form-group">
+          <label class="form-label">อาทิตย์สิ้นสุด (วันอาทิตย์)</label>
+          <input type="date" class="form-input" id="w-week-end">
+        </div>
+        <div class="form-group">
+          <label class="form-label">พนักงาน</label>
+          <select class="form-input" id="w-name" style="height:36px"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">วันทำงาน</label>
+          <input type="number" class="form-input" id="w-days" placeholder="6" min="1" max="6">
+        </div>
+        <div class="form-group" style="align-self:end">
+          <button class="btn btn-primary" onclick="addWageRecord()">+ บันทึก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── LOG PAGE ─── -->
+  <div class="page" id="page-log">
+    <div class="section-header">
+      <div>
+        <div class="section-title">ประวัติ<span>การกระทำ</span></div>
+        <div class="section-sub">Activity Log ผูกบัญชีผู้ใช้</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="clearLog()">ล้างประวัติ</button>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> บันทึกการกระทำทั้งหมด</div>
+      </div>
+      <div class="log-scroll" id="log-list"></div>
+    </div>
+    </div><!-- end log page -->
+
+  <!-- ─── SETTINGS PAGE ─── -->
+  <div class="page" id="page-settings">
+    <div class="section-header">
+      <div>
+        <div class="section-title">ตั้งค่า<span>ระบบ</span></div>
+        <div class="section-sub">Admin Settings — จัดการพนักงาน, หมวดรายจ่าย, สัดส่วนหุ้นส่วน</div>
+      </div>
+    </div>
+
+    <!-- ─ 1. Staff ─ -->
+    <div class="card settings-section">
+      <div class="card-head">
+        <div class="card-head-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          จัดการพนักงานและอัตราค่าจ้าง
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="staff-settings-list" id="staff-settings-list"></div>
+        <div class="cat-add-row">
+          <input type="text" class="form-input" id="new-staff-name" placeholder="ชื่อพนักงานใหม่" style="flex:1;min-width:120px;height:34px">
+          <input type="number" class="form-input" id="new-staff-rate" placeholder="฿/วัน" min="0" style="width:88px;height:34px;text-align:right">
+          <button class="btn btn-primary btn-sm" onclick="addStaffSetting()">+ เพิ่ม</button>
+        </div>
+        <div style="font-size:0.73rem;color:var(--graphite-light);margin-top:0.6rem">* แก้ไขชื่อ/อัตราแล้วกด "บันทึก" ด้านล่าง</div>
+      </div>
+    </div>
+
+    <!-- ─ 2. Expense Categories ─ -->
+    <div class="card settings-section">
+      <div class="card-head">
+        <div class="card-head-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          หมวดหมู่รายจ่ายส่วนกลาง
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="cat-list" id="cat-list"></div>
+        <div class="cat-add-row">
+          <input type="text" class="form-input" id="new-cat-input" placeholder="ชื่อหมวดหมู่ใหม่" style="flex:1;min-width:140px;height:34px" onkeydown="if(event.key==='Enter')addCategorySetting()">
+          <button class="btn btn-primary btn-sm" onclick="addCategorySetting()">+ เพิ่ม</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─ 3. Share Pct ─ -->
+    <div class="card settings-section">
+      <div class="card-head">
+        <div class="card-head-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          สัดส่วนหุ้นส่วน (เงินออมสะสม)
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="share-settings-grid" id="share-settings-grid"></div>
+        <div class="share-preview-box" id="share-preview-box"></div>
+      </div>
+    </div>
+
+    <div class="settings-save-bar">
+      <span class="settings-save-hint">* การเปลี่ยนแปลงจะมีผลเมื่อกดบันทึก</span>
+      <button class="btn btn-primary" onclick="saveAllSettings()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        บันทึกการตั้งค่าทั้งหมด
+      </button>
+    </div>
+  </div><!-- end settings page -->
+
+    </div><!-- end main-content -->
+  </div><!-- end app-shell -->
+</div><!-- end #app -->
+
+<!-- ─── MODAL ─── -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">ยืนยันการกระทำ</div>
+    <div class="modal-desc" id="modal-desc">คุณแน่ใจหรือไม่?</div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-gold" id="modal-confirm-btn" onclick="">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  STATE & CONSTANTS
+// ════════════════════════════════════════════════════════
+// ─── DEFAULT SETTINGS (fallback if not customized) ───
+const DEFAULT_STAFF = [
+  {name:'พี่เจน', rate:550},
+  {name:'ออย',    rate:450},
+  {name:'พลอย',   rate:350},
+  {name:'ชิน',    rate:350},
+  {name:'ฟ้า',    rate:300},
+];
+const DEFAULT_CATS = ['ค่าจ้าง','ค่าเช่า','ค่าน้ำ','ค่าไฟ','จิปาถะ'];
+const INCENTIVE_AMT = 500;
+
+// Dynamic getters — always use these instead of hardcoded arrays
+function getStaffList() { return data.staffList || DEFAULT_STAFF; }
+function getStaffRates() {
+  const r = {};
+  getStaffList().forEach(s => { r[s.name] = s.rate; });
+  return r;
+}
+function getStaffNames() { return getStaffList().map(s => s.name); }
+function getExpenseCategories() { return data.expenseCategories || [...DEFAULT_CATS]; }
+
+let currentUser = null;
+let currentMonth = null; // 'YYYY-MM'
+
+let data = {
+  somtam: {},
+  grocery: {},
+  expenses: {},
+  wages: {},
+  pool: {},
+  savings: 0,
+  savingsLog: [],
+  distributionLog: [],
+  sharePct: {o1:50, o2:50},
+  activityLog: [],
+  logo: null,
+  // Admin settings
+  staffList: null,     // [{name, rate}] — null = use DEFAULT_STAFF
+  expenseCategories: null, // [string] — null = use DEFAULT_CATS
+};
+
+let undoStack = null; // single-level undo
+
+// ════════════════════════════════════════════════════════
+//  PERSISTENCE
+// ════════════════════════════════════════════════════════
+function saveData() {
+  localStorage.setItem('alphacount_data', JSON.stringify(data));
+}
+function loadData() {
+  const raw = localStorage.getItem('alphacount_data');
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      data = Object.assign(data, parsed);
+      // Migration: upgrade old viewer account to full owner
+      if (data.accounts?.viewer && data.accounts.viewer.type === 'viewer') {
+        data.accounts.viewer.type = 'owner';
+        data.accounts.viewer.role = 'สิทธิ์เต็ม — เพิ่ม แก้ไข ลบ ได้ทั้งหมด';
+        delete data.accounts.viewer.emoji;
+        saveData();
+      }
+    } catch(e) {}
+  }
+}
+function saveUndoSnapshot() {
+  undoStack = JSON.stringify(data);
+  document.getElementById('undo-bar').classList.add('visible');
+}
+function doUndo() {
+  if (!undoStack) return;
+  const snap = undoStack;
+  saveUndoSnapshot(); // save current as new undo
+  data = JSON.parse(snap);
+  saveData();
+  addLog('ย้อนกลับการกระทำล่าสุด (Undo)');
+  renderAll();
+  showToast('↩ ย้อนกลับสำเร็จ', 'info');
+  document.getElementById('undo-bar').classList.remove('visible');
+  undoStack = null;
+}
+
+// ════════════════════════════════════════════════════════
+//  LOGO
+// ════════════════════════════════════════════════════════
+function initLogo() {
+  if (data.logo) {
+    setLogoImg(data.logo);
+  }
+}
+function setLogoImg(src) {
+  const loginImg = document.getElementById('login-logo-img');
+  const loginIcon = document.getElementById('login-logo-icon');
+  const tbImg = document.getElementById('topbar-logo-img');
+  const tbIcon = document.getElementById('topbar-logo-icon');
+  const bgLogo = document.getElementById('login-bg-logo');
+  const bgOverlay = document.getElementById('login-bg-overlay');
+  if (src) {
+    loginImg.src = src; loginImg.style.display = 'block'; loginIcon.style.display = 'none';
+    tbImg.src = src; tbImg.style.display = 'block'; tbIcon.style.display = 'none';
+    bgLogo.style.backgroundImage = "url('" + src + "')";
+    bgLogo.classList.add('has-logo');
+    bgOverlay.classList.add('has-logo');
+  } else {
+    loginImg.style.display = 'none'; loginIcon.style.display = '';
+    tbImg.style.display = 'none'; tbIcon.style.display = '';
+    bgLogo.style.backgroundImage = '';
+    bgLogo.classList.remove('has-logo');
+    bgOverlay.classList.remove('has-logo');
+  }
+}
+function triggerLogo() {
+  if (currentUser === 'viewer') { showToast('ผู้ดูไม่สามารถเปลี่ยนโลโก้ได้', 'error'); return; }
+  document.getElementById('logo-upload').click();
+}
+document.getElementById('logo-upload').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    data.logo = ev.target.result;
+    saveData();
+    setLogoImg(data.logo);
+    addLog('เปลี่ยนรูปโลโก้ร้าน');
+    showToast('อัปโหลดโลโก้สำเร็จ ✓', 'success');
+  };
+  reader.readAsDataURL(file);
+  this.value = '';
+});
+document.getElementById('login-logo-btn').addEventListener('click', () => {
+  document.getElementById('logo-upload').click();
+});
+document.getElementById('topbar-logo-btn').addEventListener('click', triggerLogo);
+
+// ════════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════════
+// Default account config — overridden by data.accounts
+const PERSON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+const LOCK_SVG  = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+const EYE_SVG   = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYEOFF_SVG= '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+const DEFAULT_ACCOUNTS = {
+  owner1: { name:'เจ้าของ 1', role:'สิทธิ์เต็ม — เพิ่ม แก้ไข ลบ ได้ทั้งหมด', pw:'', type:'owner', avatarClass:'a1' },
+  owner2: { name:'เจ้าของ 2', role:'สิทธิ์เต็ม — เพิ่ม แก้ไข ลบ ได้ทั้งหมด', pw:'', type:'owner', avatarClass:'a2' },
+  viewer: { name:'บัญชี 3',   role:'สิทธิ์เต็ม — เพิ่ม แก้ไข ลบ ได้ทั้งหมด', pw:'', type:'owner', avatarClass:'a3' },
+};
+const USER_BADGE_CLASS = { owner1:'u1', owner2:'u2', viewer:'u3' };
+
+function getAccounts() {
+  return data.accounts || DEFAULT_ACCOUNTS;
+}
+function getAccount(uid) {
+  return getAccounts()[uid] || DEFAULT_ACCOUNTS[uid];
+}
+function getUserLabel(uid) { return getAccount(uid)?.name || uid; }
+
+// Render login buttons dynamically
+function renderLoginButtons() {
+  const accts = getAccounts();
+  document.getElementById('account-btns').innerHTML = Object.entries(accts).map(([uid, ac]) => {
+    const lockBadge = ac.pw ? '&nbsp;&nbsp;<span style="font-size:0.68rem;opacity:0.6">' + LOCK_SVG + ' มีรหัสผ่าน</span>' : '';
+    return '<div class="account-btn ' + (ac.type==='viewer'?'viewer':'owner') + '" onclick="tryLogin(\'' + uid + '\')">'
+      + '<div class="account-avatar ' + ac.avatarClass + '">' + PERSON_SVG + '</div>'
+      + '<div class="account-info">'
+      + '<div class="account-name">' + ac.name + '</div>'
+      + '<div class="account-role">' + ac.role + lockBadge + '</div>'
+      + '</div>'
+      + '<div class="account-arrow">›</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ─── NEW PASSWORD-FIRST LOGIN ───
+function submitPassword() {
+  const inp = document.getElementById('main-pw-input');
+  const errEl = document.getElementById('main-pw-error');
+  const entered = inp.value;
+  errEl.textContent = '';
+
+  // Match entered password against all accounts
+  const accts = getAccounts();
+  const match = Object.entries(accts).find(([uid, ac]) => ac.pw && ac.pw === entered);
+
+  if (match) {
+    inp.value = '';
+    inp.classList.remove('error');
+    login(match[0]);
+  } else {
+    // Check if any account has no password set — allow blank login for owner1 as fallback
+    const noPassAcct = Object.entries(accts).find(([uid, ac]) => !ac.pw);
+    if (!entered && noPassAcct) {
+      // blank + account has no pw → show which accounts are available
+      errEl.textContent = 'กรุณาตั้งรหัสผ่านในหน้าตั้งค่าก่อนใช้งาน';
+      return;
+    }
+    inp.classList.add('error');
+    setTimeout(() => inp.classList.remove('error'), 400);
+    errEl.textContent = 'รหัสผ่านไม่ถูกต้อง';
+    inp.value = '';
+    inp.focus();
+  }
+}
+
+let mainPwVisible = false;
+function toggleMainPw() {
+  mainPwVisible = !mainPwVisible;
+  const inp = document.getElementById('main-pw-input');
+  const icon = document.getElementById('main-eye-icon');
+  if (mainPwVisible) {
+    inp.removeAttribute('type');
+    inp.style.letterSpacing = '0.04em';
+    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  } else {
+    inp.type = 'password';
+    inp.style.letterSpacing = '0.12em';
+    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+}
+
+// kept for compat (settings modal still calls these paths)
+function renderLoginButtons() { /* no-op: new design doesn't use account buttons */ }
+let pendingLoginUser = null;
+function tryLogin(uid) { login(uid); }
+function confirmPin() {}
+function cancelPin() {}
+
+function login(user) {
+  currentUser = user;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('active');
+  const badge = document.getElementById('topbar-badge');
+  badge.className = 'topbar-user-badge ' + (USER_BADGE_CLASS[user]||'u3');
+  badge.innerHTML = PERSON_SVG;
+  document.getElementById('topbar-username').textContent = getUserLabel(user);
+  const vbw = document.getElementById('viewer-badge-wrap');
+  vbw.innerHTML = '';
+  setMonth(getCurrentYYYYMM());
+  addLog('เข้าสู่ระบบ');
+  renderAll();
+}
+function logout() {
+  currentUser = null;
+  document.getElementById('login-screen').style.display = '';
+  document.getElementById('app').classList.remove('active');
+  const inp = document.getElementById('main-pw-input');
+  if (inp) { inp.value = ''; }
+  const errEl = document.getElementById('main-pw-error');
+  if (errEl) errEl.textContent = '';
+}
+function isViewer() { return getAccount(currentUser)?.type === 'viewer'; }
+function guardViewer() {
+  if (isViewer()) { showToast('ผู้ดูไม่สามารถแก้ไขข้อมูลได้', 'error'); return true; }
+  return false;
+}
+
+// ─── ACCOUNT SETTINGS ───
+function openAcctSettings() {
+  const accts = getAccounts();
+  document.getElementById('as-name1').value = accts.owner1?.name || 'เจ้าของ 1';
+  document.getElementById('as-name2').value = accts.owner2?.name || 'เจ้าของ 2';
+  document.getElementById('as-name3').value = accts.viewer?.name || 'บัญชี 3';
+  // Clear pw fields
+  ['as-pw1','as-pw1c','as-pw2','as-pw2c','as-pw3','as-pw3c'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  ['as-err1','as-err2','as-err3'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('acct-modal-overlay').classList.add('open');
+}
+function closeAcctSettings() {
+  document.getElementById('acct-modal-overlay').classList.remove('open');
+}
+function togglePwVis(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.innerHTML = show ? EYEOFF_SVG : EYE_SVG;
+}
+function saveAcctSettings() {
+  // Validate passwords match
+  const pairs = [
+    ['as-pw1','as-pw1c','as-err1','owner1'],
+    ['as-pw2','as-pw2c','as-err2','owner2'],
+    ['as-pw3','as-pw3c','as-err3','viewer'],
+  ];
+  let hasError = false;
+  pairs.forEach(([p,pc,errId]) => {
+    const v = document.getElementById(p).value;
+    const vc = document.getElementById(pc).value;
+    const errEl = document.getElementById(errId);
+    if (v && v !== vc) {
+      errEl.textContent = 'รหัสผ่านไม่ตรงกัน กรุณากรอกใหม่';
+      errEl.style.display = 'block';
+      hasError = true;
+    } else {
+      errEl.style.display = 'none';
+    }
+  });
+  if (hasError) return;
+
+  if (!data.accounts) data.accounts = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
+
+  const names = [
+    document.getElementById('as-name1').value.trim() || 'เจ้าของ 1',
+    document.getElementById('as-name2').value.trim() || 'เจ้าของ 2',
+    document.getElementById('as-name3').value.trim() || 'บัญชี 3',
+  ];
+  const keys = ['owner1','owner2','viewer'];
+  const pwInputs = ['as-pw1','as-pw2','as-pw3'];
+
+  keys.forEach((uid, i) => {
+    const oldName = data.accounts[uid].name;
+    data.accounts[uid].name = names[i];
+    // Role label update — all accounts are full permission
+    data.accounts[uid].role = 'สิทธิ์เต็ม — เพิ่ม แก้ไข ลบ ได้ทั้งหมด';
+    data.accounts[uid].type = 'owner';
+    const newPw = document.getElementById(pwInputs[i]).value;
+    if (newPw) data.accounts[uid].pw = newPw;
+    if (oldName !== names[i]) addLog(`เปลี่ยนชื่อบัญชี "${oldName}" → "${names[i]}"`);
+    if (newPw) addLog(`เปลี่ยนรหัสผ่านบัญชี "${names[i]}"`);
+  });
+
+  saveData();
+  renderLoginButtons();
+  // Update topbar username if currently logged in
+  if (currentUser) {
+    document.getElementById('topbar-username').textContent = getUserLabel(currentUser);
+  }
+  closeAcctSettings();
+  showToast('บันทึกการตั้งค่าบัญชีสำเร็จ ✓', 'success');
+}
+// Close on overlay click
+document.getElementById('acct-modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('acct-modal-overlay')) closeAcctSettings();
+});
+
+// ════════════════════════════════════════════════════════
+//  MONTH NAVIGATION
+// ════════════════════════════════════════════════════════
+function getCurrentYYYYMM() {
+  const now = new Date();
+  return now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+}
+function setMonth(ym) {
+  currentMonth = ym;
+  renderMonthLabels();
+}
+function changeMonth(delta) {
+  const [y,m] = currentMonth.split('-').map(Number);
+  const d = new Date(y, m-1+delta, 1);
+  setMonth(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'));
+  renderAll();
+}
+function getMonthLabel(ym) {
+  if (!ym) return '—';
+  const [y,m] = ym.split('-').map(Number);
+  const thMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  return thMonths[m-1] + ' ' + (y+543-2500);
+}
+function renderMonthLabels() {
+  const label = getMonthLabel(currentMonth);
+  ['dash','somtam','grocery','wallet','staff'].forEach(id => {
+    const el = document.getElementById(id+'-month-nav');
+    if (el) el.textContent = label;
+  });
+  const ds = document.getElementById('dash-month-label');
+  if (ds) ds.textContent = 'ข้อมูลประจำเดือน ' + getMonthLabel(currentMonth);
+}
+
+// ════════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════════
+function fmt(n) {
+  if (n===undefined||n===null||isNaN(n)) return '—';
+  return Number(n).toLocaleString('th-TH');
+}
+function fmtB(n) { return '฿'+fmt(n); }
+function todayISO() {
+  const n = new Date();
+  return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return d+'/'+m+'/'+(Number(y)+543-2500);
+}
+function monthOf(iso) { return iso ? iso.slice(0,7) : null; }
+function getOrCreate(obj, key, def) {
+  if (!obj[key]) obj[key] = typeof def === 'function' ? def() : JSON.parse(JSON.stringify(def));
+  return obj[key];
+}
+function numInput(id) { return parseFloat(document.getElementById(id).value)||0; }
+function strInput(id) { return document.getElementById(id).value.trim(); }
+
+// ════════════════════════════════════════════════════════
+//  ACTIVITY LOG
+// ════════════════════════════════════════════════════════
+function addLog(action, extra) {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'2-digit'});
+  const timeStr = now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  data.activityLog.unshift({
+    ts: now.toISOString(),
+    dateStr, timeStr,
+    user: getUserLabel(currentUser)||'?',
+    action, extra: extra||''
+  });
+  if (data.activityLog.length > 500) data.activityLog.pop();
+  saveData();
+  renderLog();
+}
+function renderLog() {
+  const el = document.getElementById('log-list');
+  if (!el) return;
+  if (!data.activityLog.length) {
+    el.innerHTML = '<div class="empty-state">ยังไม่มีประวัติ</div>';
+    return;
+  }
+  el.innerHTML = data.activityLog.slice(0,200).map(e => `
+    <div class="log-entry">
+      <span class="log-time">${e.dateStr} ${e.timeStr}</span>
+      <span class="log-user">${e.user}</span>
+      <span class="log-action">ได้ทำการ ${e.action}${e.extra?' | '+e.extra:''}</span>
+    </div>
+  `).join('');
+}
+function clearLog() {
+  if (guardViewer()) return;
+  data.activityLog = [];
+  saveData(); renderLog();
+}
+
+// ════════════════════════════════════════════════════════
+//  DAILY ACCOUNTS — CORE LOGIC
+// ════════════════════════════════════════════════════════
+function getRows(type, ym) {
+  return getOrCreate(data[type], ym, []);
+}
+function computeRows(rows, carryover) {
+  // rows: sorted array of {date, income, expense, save}
+  // carryover: ยอดยกมาของวันแรก
+  let carry = carryover;
+  return rows.map(r => {
+    const profit = r.income - r.expense;
+    const beforeSave = profit + carry;
+    const afterSave = beforeSave - r.save;
+    const row = { ...r, profit, carryover: carry, beforeSave, afterSave };
+    carry = afterSave;
+    return row;
+  });
+}
+function getCarryover(type, ym) {
+  // Get last afterSave of previous month
+  const [y,m] = ym.split('-').map(Number);
+  const prevD = new Date(y, m-2, 1);
+  const prevYM = prevD.getFullYear()+'-'+String(prevD.getMonth()+1).padStart(2,'0');
+  const prevRows = data[type][prevYM];
+  if (!prevRows || !prevRows.length) return 0;
+  const sorted = [...prevRows].sort((a,b)=>a.date.localeCompare(b.date));
+  const prevComputed = computeRows(sorted, getCarryover(type, prevYM));
+  return prevComputed[prevComputed.length-1].afterSave;
+}
+function getPoolInflowForMonth(ym) {
+  // Sum of all savings from somtam + grocery in this month
+  const sRows = data.somtam[ym]||[];
+  const gRows = data.grocery[ym]||[];
+  return sRows.reduce((s,r)=>s+r.save,0) + gRows.reduce((s,r)=>s+r.save,0);
+}
+function getPoolOutflowForMonth(ym) {
+  const expRows = data.expenses[ym]||[];
+  return expRows.reduce((s,r)=>s+r.amount,0);
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER DAILY TABLE
+// ════════════════════════════════════════════════════════
+function renderDailyTable(type) {
+  const ym = currentMonth;
+  const rawRows = [...(data[type][ym]||[])].sort((a,b)=>a.date.localeCompare(b.date));
+  const carry = getCarryover(type, ym);
+  const rows = computeRows(rawRows, carry);
+  const tbody = document.getElementById(type===`somtam`?'somtam-tbody':'grocery-tbody');
+  const tfoot = document.getElementById(type===`somtam`?'somtam-tfoot':'grocery-tfoot');
+  const carryEl = document.getElementById(type+'-carryover');
+  const cardSub = document.getElementById(type+'-card-sub');
+
+  if (carry > 0) {
+    carryEl.style.display = '';
+    carryEl.textContent = 'ยอดยกมาจากเดือนก่อน: ฿'+fmt(carry)+' บาท';
+  } else {
+    carryEl.style.display = 'none';
+  }
+  if (cardSub) cardSub.textContent = getMonthLabel(ym);
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-state">ยังไม่มีข้อมูล — กรอกแบบฟอร์มด้านล่าง</td></tr>`;
+    tfoot.innerHTML = '';
+    return;
+  }
+
+  const canEdit = !isViewer();
+  tbody.innerHTML = rows.map((r,i) => `
+    <tr>
+      <td class="td-date">${fmtDate(r.date)}</td>
+      <td>${fmt(r.income)}</td>
+      <td>${fmt(r.expense)}</td>
+      <td class="td-profit">${fmt(r.profit)}</td>
+      <td>${fmt(r.carryover)}</td>
+      <td class="td-remain">${fmt(r.beforeSave)}</td>
+      <td class="td-save">${fmt(r.save)}</td>
+      <td class="td-remain">${fmt(r.afterSave)}</td>
+      <td class="td-action">${canEdit?`<button class="btn-icon" title='ลบ' onclick="deleteRow('${type}','${r.date}')"><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg></button>`:''}</td>
+    </tr>
+  `).join('');
+
+  // Totals
+  const totIncome = rows.reduce((s,r)=>s+r.income,0);
+  const totExpense = rows.reduce((s,r)=>s+r.expense,0);
+  const totProfit = rows.reduce((s,r)=>s+r.profit,0);
+  const totSave = rows.reduce((s,r)=>s+r.save,0);
+  const lastAfter = rows[rows.length-1].afterSave;
+  tfoot.innerHTML = `<tr class="total-row">
+    <td>รวมเดือนนี้</td>
+    <td>${fmt(totIncome)}</td>
+    <td>${fmt(totExpense)}</td>
+    <td class="td-profit">${fmt(totProfit)}</td>
+    <td></td><td></td>
+    <td class="td-save">${fmt(totSave)}</td>
+    <td class="td-remain">${fmt(lastAfter)}</td>
+    <td></td>
+  </tr>`;
+}
+
+function addDailyRow(type) {
+  if (guardViewer()) return;
+  const prefix = type==='somtam'?'s':'g';
+  const dateVal = strInput(prefix+'-date')||todayISO();
+  const income = numInput(prefix+'-income');
+  const expense = numInput(prefix+'-expense');
+  const save = numInput(prefix+'-save');
+
+  if (!dateVal) { showToast('กรุณาระบุวันที่', 'error'); return; }
+
+  saveUndoSnapshot();
+  const ym = monthOf(dateVal);
+  const rows = getOrCreate(data[type], ym, []);
+  // Check duplicate date
+  const idx = rows.findIndex(r=>r.date===dateVal);
+  if (idx>=0) {
+    rows.splice(idx,1);
+  }
+  rows.push({ date:dateVal, income, expense, save });
+  rows.sort((a,b)=>a.date.localeCompare(b.date));
+  saveData();
+
+  // Update pool inflow
+  updatePoolForMonth(ym);
+  addLog(`บันทึกข้อมูล${type==='somtam'?'ส้มตำ':'ของชำ'}`, `วันที่ ${fmtDate(dateVal)} รายรับ ${fmtB(income)} รายจ่าย ${fmtB(expense)} เก็บ ${fmtB(save)}`);
+  setMonth(ym);
+  renderAll();
+  // Clear form
+  document.getElementById(prefix+'-income').value = '';
+  document.getElementById(prefix+'-expense').value = '';
+  document.getElementById(prefix+'-save').value = '';
+  showToast('บันทึกสำเร็จ ✓', 'success');
+}
+function addSomtamRow() { addDailyRow('somtam'); }
+function addGroceryRow() { addDailyRow('grocery'); }
+
+function deleteRow(type, date) {
+  if (guardViewer()) return;
+  saveUndoSnapshot();
+  const ym = monthOf(date);
+  data[type][ym] = (data[type][ym]||[]).filter(r=>r.date!==date);
+  updatePoolForMonth(ym);
+  saveData();
+  addLog(`ลบแถวข้อมูล${type==='somtam'?'ส้มตำ':'ของชำ'}`, `วันที่ ${fmtDate(date)}`);
+  renderAll();
+  showToast('ลบข้อมูลแล้ว', 'info');
+}
+
+// ════════════════════════════════════════════════════════
+//  POOL / WALLET
+// ════════════════════════════════════════════════════════
+function getPoolBalance(ym) {
+  // carried from prev month + inflow - outflow
+  const [y,m] = ym.split('-').map(Number);
+  const prevD = new Date(y, m-2, 1);
+  const prevYM = prevD.getFullYear()+'-'+String(prevD.getMonth()+1).padStart(2,'0');
+  // recursive: get prev month end balance
+  const prevBalance = getPoolEndBalance(prevYM);
+  const inflow = getPoolInflowForMonth(ym);
+  const outflow = getPoolOutflowForMonth(ym);
+  return prevBalance + inflow - outflow;
+}
+function getPoolEndBalance(ym) {
+  // Avoid infinite recursion — stop at very old months
+  const [y,m] = ym.split('-').map(Number);
+  if (y < 2020) return 0;
+  const [y2,m2] = currentMonth.split('-').map(Number);
+  // only recurse if ym is strictly before currentMonth
+  const ymDate = y*12+m;
+  const cmDate = y2*12+m2;
+  if (ymDate > cmDate) return 0;
+  return getPoolBalance(ym);
+}
+
+function updatePoolForMonth(ym) {
+  // Just triggers save; pool is computed dynamically
+  saveData();
+}
+
+function renderWallet() {
+  const ym = currentMonth;
+  const carried = getPoolEndBalance(getPrevYM(ym));
+  const inflow = getPoolInflowForMonth(ym);
+  const outflow = getPoolOutflowForMonth(ym);
+  const total = carried + inflow - outflow;
+
+  document.getElementById('pool-total-val').textContent = fmtB(total);
+  document.getElementById('pool-carried-val').textContent = fmtB(carried);
+  document.getElementById('pool-inflow-val').textContent = fmtB(inflow);
+  document.getElementById('pool-outflow-val').textContent = fmtB(outflow);
+
+  // Savings
+  document.getElementById('savings-total-val').textContent = fmtB(data.savings);
+  renderSavingsShares();
+
+  // Share pct
+  document.getElementById('share-pct1').value = data.sharePct.o1;
+  document.getElementById('share-pct2').value = data.sharePct.o2;
+  updatePctNote();
+
+  // Confirm dist box
+  renderConfirmDist();
+
+  // Expenses table
+  renderExpenseTable();
+}
+function getPrevYM(ym) {
+  const [y,m] = ym.split('-').map(Number);
+  const d = new Date(y, m-2, 1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function renderSavingsShares() {
+  const p1 = data.sharePct.o1/100;
+  const p2 = data.sharePct.o2/100;
+  const s1 = Math.round(data.savings * p1);
+  const s2 = Math.round(data.savings * p2);
+  document.getElementById('savings-shares').innerHTML = `
+    <div class="share-row"><span class="share-name">เจ้าของ 1</span><span class="share-pct">${data.sharePct.o1}%</span><span class="share-amt">${fmtB(s1)}</span></div>
+    <div class="share-row"><span class="share-name">เจ้าของ 2</span><span class="share-pct">${data.sharePct.o2}%</span><span class="share-amt">${fmtB(s2)}</span></div>
+  `;
+}
+function renderConfirmDist() {
+  const p1 = data.sharePct.o1/100;
+  const p2 = data.sharePct.o2/100;
+  const s1 = Math.round(data.savings * p1);
+  const s2 = Math.round(data.savings * p2);
+  document.getElementById('confirm-dist-amounts').innerHTML = `
+    <span class="badge badge-sage">เจ้าของ 1 ได้รับ ${fmtB(s1)}</span>
+    <span style="margin:0 4px">·</span>
+    <span class="badge badge-gold">เจ้าของ 2 ได้รับ ${fmtB(s2)}</span>
+  `;
+}
+function updatePctNote() {
+  const sum = (data.sharePct.o1||0)+(data.sharePct.o2||0);
+  const el = document.getElementById('pct-sum-note');
+  if (sum!==100) { el.innerHTML = `<span style="color:var(--error)">รวม ${sum}% (ต้องครบ 100%)</span>`; }
+  else { el.innerHTML = `<span style="color:var(--sage-dark)">✓ รวม 100%</span>`; }
+}
+function saveSharePct() {
+  data.sharePct.o1 = parseFloat(document.getElementById('share-pct1').value)||50;
+  data.sharePct.o2 = parseFloat(document.getElementById('share-pct2').value)||50;
+  saveData(); updatePctNote(); renderSavingsShares(); renderConfirmDist();
+}
+
+function addSavings() {
+  if (guardViewer()) return;
+  const amt = numInput('savings-add-input');
+  if (!amt||amt<=0) { showToast('กรุณากรอกจำนวนเงิน', 'error'); return; }
+  saveUndoSnapshot();
+  data.savings += amt;
+  data.savingsLog.push({date:todayISO(), amount:amt, user:getUserLabel(currentUser)});
+  saveData();
+  addLog('ดึงเงินเข้าสะสมกองกลาง', fmtB(amt));
+  document.getElementById('savings-add-input').value = '';
+  renderWallet();
+  showToast('เพิ่มเงินสะสม '+fmtB(amt)+' ✓', 'success');
+}
+
+function confirmDistribution() {
+  if (guardViewer()) return;
+  if (data.savings <= 0) { showToast('ยังไม่มียอดสะสม', 'error'); return; }
+  openModal(
+    'ยืนยันการแบ่งเงินปันผล',
+    `แบ่งเงินสะสม ${fmtB(data.savings)} ให้ผู้ถือหุ้นจริง?\nยอดสะสมจะถูกรีเซ็ตเป็น ฿0`,
+    () => {
+      saveUndoSnapshot();
+      const p1 = data.sharePct.o1/100;
+      const p2 = data.sharePct.o2/100;
+      const s1 = Math.round(data.savings * p1);
+      const s2 = Math.round(data.savings * p2);
+      data.distributionLog.push({date:todayISO(), total:data.savings, s1, s2, user:getUserLabel(currentUser)});
+      addLog('ยืนยันแบ่งเงินปันผล', `เจ้าของ 1 ${fmtB(s1)}, เจ้าของ 2 ${fmtB(s2)}`);
+      data.savings = 0;
+      saveData();
+      renderWallet();
+      showToast('แบ่งเงินปันผลสำเร็จ', 'success');
+    }
+  );
+}
+
+function renderExpenseTable() {
+  const ym = currentMonth;
+  const rows = [...(data.expenses[ym]||[])].sort((a,b)=>a.date.localeCompare(b.date));
+  const tbody = document.getElementById('expense-tbody');
+  const canEdit = !isViewer();
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty-state">ยังไม่มีรายจ่าย</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td class="td-date">${fmtDate(r.date)}</td>
+      <td><span class="badge badge-gray">${r.type}</span></td>
+      <td>${r.desc}</td>
+      <td class="td-remain">${fmt(r.amount)}</td>
+      <td class="td-action">${canEdit?`<button class="btn-icon" onclick="deleteExpense('${r._id}')"><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg></button>`:''}</td>
+    </tr>
+  `).join('');
+}
+
+function addExpense() {
+  if (guardViewer()) return;
+  const dateVal = strInput('exp-date')||todayISO();
+  const type = strInput('exp-type');
+  const desc = strInput('exp-desc');
+  const amount = numInput('exp-amount');
+  if (!amount||amount<=0) { showToast('กรุณากรอกจำนวนเงิน','error'); return; }
+  saveUndoSnapshot();
+  const ym = monthOf(dateVal);
+  const rows = getOrCreate(data.expenses, ym, []);
+  const id = Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  rows.push({date:dateVal, type, desc, amount, _id:id});
+  saveData();
+  addLog('บันทึกรายจ่ายส่วนกลาง', `${type} ${fmtB(amount)} ${desc}`);
+  setMonth(ym);
+  renderAll();
+  document.getElementById('exp-desc').value='';
+  document.getElementById('exp-amount').value='';
+  showToast('บันทึกรายจ่ายสำเร็จ ✓', 'success');
+}
+
+function deleteExpense(id) {
+  if (guardViewer()) return;
+  saveUndoSnapshot();
+  for (const ym in data.expenses) {
+    data.expenses[ym] = data.expenses[ym].filter(r=>r._id!==id);
+  }
+  saveData(); addLog('ลบรายจ่ายส่วนกลาง', id);
+  renderAll();
+  showToast('ลบแล้ว','info');
+}
+
+// ════════════════════════════════════════════════════════
+//  STAFF
+// ════════════════════════════════════════════════════════
+function renderStaff() {
+  const ym = currentMonth;
+  const wages = data.wages[ym]||[];
+  const now = new Date();
+  const isFirstOfMonth = now.getDate()===1 && monthOf(todayISO())===ym;
+
+  // Incentive box
+  const ib = document.getElementById('incentive-box');
+  const ic = document.getElementById('incentive-checks');
+  if (isFirstOfMonth && !isViewer()) {
+    ib.style.display = 'flex';
+    ic.style.display = 'block';
+    ic.innerHTML = `<div class="card" style="padding:1rem 1.2rem">
+      <div style="font-size:0.82rem;font-weight:600;margin-bottom:0.8rem;color:var(--graphite)">เลือกพนักงานที่ได้รับเบี้ยขยัน ${fmtB(INCENTIVE_AMT)}/คน</div>
+      <div style="display:flex;flex-wrap:wrap;gap:0.6rem">${getStaffNames().map(n=>`
+        <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;cursor:pointer;padding:0.4rem 0.8rem;border:1.5px solid var(--cream-dark);border-radius:6px;background:var(--white)">
+          <input type="checkbox" id="inc-${n}" style="accent-color:var(--sage)"> ${n}
+        </label>
+      `).join('')}</div>
+      <button class="btn btn-gold btn-sm" style="margin-top:0.8rem" onclick="payIncentives()">จ่ายเบี้ยขยัน</button>
+    </div>`;
+  } else { ib.style.display='none'; ic.style.display='none'; }
+
+  // Staff grid
+  const grid = document.getElementById('staff-grid');
+  grid.innerHTML = getStaffNames().map(name => {
+    const rate = getStaffRates()[name];
+    // Current week's accumulated wages
+    const weekWages = wages.filter(w=>w.name===name);
+    const weekTotal = weekWages.reduce((s,w)=>s+(w.days*(w.rate||rate))+(w.incentive||0),0);
+    const dayRows = weekWages.slice(-3).map(w=>`
+      <div class="swday">สัปดาห์ ${fmtDate(w.weekEnd)}</div>
+      <div class="swamt">${fmtB(w.days*(w.rate||rate))}</div>
+    `).join('');
+    return `<div class="staff-card">
+      <div class="staff-top">
+        <div class="staff-avatar">${PERSON_SVG}</div>
+        <div>
+          <div class="staff-name">${name}</div>
+          <div class="staff-rate">฿${fmt(rate)}/วัน · หยุดจันทร์</div>
+        </div>
+      </div>
+      <div class="staff-week-total">${fmtB(weekTotal)}</div>
+      <div class="staff-week-label">รวมยอดจ่ายเดือนนี้</div>
+      <div class="staff-week-row">${dayRows}</div>
+    </div>`;
+  }).join('');
+
+  // Wage table
+  const allWages = [...wages].sort((a,b)=>a.weekEnd.localeCompare(b.weekEnd));
+  const tbody = document.getElementById('wage-tbody');
+  const canEdit = !isViewer();
+  if (!allWages.length) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-state">ยังไม่มีข้อมูล</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = allWages.map(w => {
+    const rate = w.rate||getStaffRates()[w.name]||0;
+    const base = w.days*rate;
+    const inc = w.incentive||0;
+    const total = base+inc;
+    return `<tr>
+      <td class="td-date">${fmtDate(w.weekEnd)}</td>
+      <td>${w.name}</td>
+      <td>${w.days} วัน</td>
+      <td>${fmt(rate)}</td>
+      <td>${fmt(base)}</td>
+      <td>${inc>0?`<span class="badge badge-gold">+${fmt(inc)}</span>`:'—'}</td>
+      <td class="td-remain">${fmt(total)}</td>
+      <td class="td-action">${canEdit?`<button class="btn-icon" onclick="deleteWage('${w._id}')"><svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg></button>`:''}</td>
+    </tr>`;
+  }).join('');
+}
+
+function addWageRecord() {
+  if (guardViewer()) return;
+  const weekEnd = strInput('w-week-end')||todayISO();
+  const name = strInput('w-name');
+  const days = numInput('w-days')||6;
+  const rate = getStaffRates()[name]||0;
+  const wage = days * rate;
+  if (!name) { showToast('กรุณาเลือกพนักงาน','error'); return; }
+  saveUndoSnapshot();
+  const ym = monthOf(weekEnd);
+  const rows = getOrCreate(data.wages, ym, []);
+  const id = Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  rows.push({weekEnd, name, days, rate, incentive:0, _id:id});
+  // Auto add expense to pool
+  const expYM = ym;
+  const expRows = getOrCreate(data.expenses, expYM, []);
+  const expId = 'wage_'+id;
+  expRows.push({date:weekEnd, type:'ค่าจ้าง', desc:`ค่าจ้าง ${name} ${days} วัน`, amount:wage, _id:expId});
+  saveData();
+  addLog('บันทึกค่าจ้างพนักงาน', `${name} ${days} วัน = ${fmtB(wage)}`);
+  setMonth(ym);
+  renderAll();
+  document.getElementById('w-days').value='';
+  showToast(`บันทึกค่าจ้าง ${name} ${fmtB(wage)} ✓`, 'success');
+}
+
+function deleteWage(id) {
+  if (guardViewer()) return;
+  saveUndoSnapshot();
+  for (const ym in data.wages) {
+    data.wages[ym] = data.wages[ym].filter(w=>w._id!==id);
+  }
+  // Also delete linked expense
+  const expId = 'wage_'+id;
+  for (const ym in data.expenses) {
+    data.expenses[ym] = data.expenses[ym].filter(e=>e._id!==expId);
+  }
+  saveData(); addLog('ลบบันทึกค่าจ้าง', id);
+  renderAll(); showToast('ลบแล้ว','info');
+}
+
+function payIncentives() {
+  if (guardViewer()) return;
+  const selected = getStaffNames().filter(n => {
+    const el = document.getElementById('inc-'+n);
+    return el && el.checked;
+  });
+  if (!selected.length) { showToast('กรุณาเลือกพนักงาน','error'); return; }
+  const total = selected.length * INCENTIVE_AMT;
+  saveUndoSnapshot();
+  const ym = currentMonth;
+  const expRows = getOrCreate(data.expenses, ym, []);
+  selected.forEach(name => {
+    const wRows = getOrCreate(data.wages, ym, []);
+    // Add incentive to last wage record for this person this month
+    const lastWage = [...wRows].reverse().find(w=>w.name===name);
+    if (lastWage) lastWage.incentive = (lastWage.incentive||0)+INCENTIVE_AMT;
+    // Add expense
+    const id = 'inc_'+Date.now()+'_'+name;
+    expRows.push({date:todayISO(), type:'ค่าจ้าง', desc:`เบี้ยขยัน ${name}`, amount:INCENTIVE_AMT, _id:id});
+  });
+  saveData();
+  addLog('จ่ายเบี้ยขยัน', `${selected.join(', ')} รวม ${fmtB(total)}`);
+  renderAll();
+  showToast(`จ่ายเบี้ยขยัน ${selected.length} คน รวม ${fmtB(total)} ✓`, 'success');
+}
+
+// ════════════════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════════════════
+function renderDashboard() {
+  const ym = currentMonth;
+
+  // Somtam totals
+  const sRaw = [...(data.somtam[ym]||[])].sort((a,b)=>a.date.localeCompare(b.date));
+  const sCarry = getCarryover('somtam', ym);
+  const sRows = computeRows(sRaw, sCarry);
+  const sTotIncome = sRows.reduce((s,r)=>s+r.income,0);
+  const sTotProfit = sRows.reduce((s,r)=>s+r.profit,0);
+
+  // Grocery totals
+  const gRaw = [...(data.grocery[ym]||[])].sort((a,b)=>a.date.localeCompare(b.date));
+  const gCarry = getCarryover('grocery', ym);
+  const gRows = computeRows(gRaw, gCarry);
+  const gTotIncome = gRows.reduce((s,r)=>s+r.income,0);
+  const gTotProfit = gRows.reduce((s,r)=>s+r.profit,0);
+
+  // Pool
+  const poolCarried = getPoolEndBalance(getPrevYM(ym));
+  const poolInflow = getPoolInflowForMonth(ym);
+  const poolOutflow = getPoolOutflowForMonth(ym);
+  const poolTotal = poolCarried + poolInflow - poolOutflow;
+
+  // Stats
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">รายรับรวม (ส้มตำ)</div><div class="stat-value green">${fmtB(sTotIncome)}</div><div class="stat-sub">${sRows.length} วัน</div></div>
+    <div class="stat-card"><div class="stat-label">รายรับรวม (ของชำ)</div><div class="stat-value green">${fmtB(gTotIncome)}</div><div class="stat-sub">${gRows.length} วัน</div></div>
+    <div class="stat-card"><div class="stat-label">กำไรรวม (ส้มตำ)</div><div class="stat-value gold">${fmtB(sTotProfit)}</div></div>
+    <div class="stat-card"><div class="stat-label">กำไรรวม (ของชำ)</div><div class="stat-value gold">${fmtB(gTotProfit)}</div></div>
+    <div class="stat-card"><div class="stat-label">เงินเก็บรวม (กองกลาง)</div><div class="stat-value">${fmtB(poolTotal)}</div></div>
+    <div class="stat-card"><div class="stat-label">เงินออมสะสม (ปันผล)</div><div class="stat-value gold">${fmtB(data.savings)}</div></div>
+  `;
+
+  // Expense breakdown
+  const expRows = data.expenses[ym]||[];
+  const byType = {};
+  expRows.forEach(r => { byType[r.type] = (byType[r.type]||0)+r.amount; });
+  const totalExp = Object.values(byType).reduce((s,v)=>s+v,0);
+  const expColors = {'ค่าจ้าง':'var(--sage)','ค่าเช่า':'var(--gold)','ค่าน้ำ':'#5B8DD4','ค่าไฟ':'#D48A5B','จิปาถะ':'var(--graphite-light)'};
+  const expBreak = document.getElementById('dash-expense-breakdown');
+  if (Object.keys(byType).length) {
+    expBreak.innerHTML = Object.entries(byType).map(([k,v])=>`
+      <div class="dash-bar-row">
+        <div class="dash-bar-label">${k}</div>
+        <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${totalExp?Math.round(v/totalExp*100):0}%;background:${expColors[k]||'var(--sage)'}"></div></div>
+        <div class="dash-bar-val">${fmtB(v)}</div>
+      </div>
+    `).join('') + `<div style="text-align:right;font-size:0.78rem;color:var(--graphite-light);margin-top:0.5rem">รวม ${fmtB(totalExp)}</div>`;
+  } else {
+    expBreak.innerHTML = '<div class="empty-state" style="padding:1rem 0">ยังไม่มีรายจ่ายเดือนนี้</div>';
+  }
+
+  // Sales summary
+  const salesEl = document.getElementById('dash-sales-summary');
+  const maxVal = Math.max(sTotIncome, gTotIncome, 1);
+  salesEl.innerHTML = `
+    <div class="dash-bar-row">
+      <div class="dash-bar-label">ส้มตำ</div>
+      <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.round(sTotIncome/maxVal*100)}%;background:var(--sage)"></div></div>
+      <div class="dash-bar-val">${fmtB(sTotIncome)}</div>
+    </div>
+    <div class="dash-bar-row">
+      <div class="dash-bar-label">ของชำ</div>
+      <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.round(gTotIncome/maxVal*100)}%;background:var(--gold)"></div></div>
+      <div class="dash-bar-val">${fmtB(gTotIncome)}</div>
+    </div>
+    <div class="dash-bar-row">
+      <div class="dash-bar-label">กำไรรวม</div>
+      <div class="dash-bar-track"><div class="dash-bar-fill" style="width:${Math.round((sTotProfit+gTotProfit)/maxVal*100)}%;background:var(--graphite-light)"></div></div>
+      <div class="dash-bar-val">${fmtB(sTotProfit+gTotProfit)}</div>
+    </div>
+  `;
+
+  // Wallet summary
+  document.getElementById('dash-wallet-summary').innerHTML = `
+    <div class="stat-row" style="margin-bottom:0">
+      <div class="stat-card"><div class="stat-label">ยกมาจากเดือนก่อน</div><div class="stat-value">${fmtB(poolCarried)}</div></div>
+      <div class="stat-card"><div class="stat-label">ไหลเข้าเดือนนี้</div><div class="stat-value green">${fmtB(poolInflow)}</div></div>
+      <div class="stat-card"><div class="stat-label">จ่ายออกเดือนนี้</div><div class="stat-value red">${fmtB(poolOutflow)}</div></div>
+      <div class="stat-card"><div class="stat-label">คงเหลือปัจจุบัน</div><div class="stat-value gold">${fmtB(poolTotal)}</div></div>
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════════════════════
+//  EXPORT / IMPORT
+// ════════════════════════════════════════════════════════
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'alphacount_backup_'+todayISO()+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  addLog('Export ข้อมูลสำรอง');
+  showToast('Export สำเร็จ ✓', 'success');
+}
+function triggerImport() {
+  if (guardViewer()) return;
+  document.getElementById('import-file').click();
+}
+function importData(input) {
+  if (guardViewer()) return;
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      saveUndoSnapshot();
+      Object.assign(data, imported);
+      saveData();
+      addLog('Import ข้อมูลสำรอง');
+      renderAll();
+      initLogo();
+      showToast('Import สำเร็จ ✓', 'success');
+    } catch(err) { showToast('ไฟล์ไม่ถูกต้อง','error'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// ════════════════════════════════════════════════════════
+//  SIDEBAR
+// ════════════════════════════════════════════════════════
+let sidebarOpen = false;
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  const sb = document.getElementById('sidebar');
+  const hb = document.getElementById('hamburger-btn');
+  const ov = document.getElementById('sidebar-overlay');
+  const isMobile = window.innerWidth <= 768;
+  if (sidebarOpen) {
+    sb.classList.remove('collapsed');
+    hb.classList.add('open');
+    if (isMobile) ov.classList.add('visible');
+  } else {
+    sb.classList.add('collapsed');
+    hb.classList.remove('open');
+    ov.classList.remove('visible');
+  }
+}
+function closeSidebar() {
+  sidebarOpen = false;
+  document.getElementById('sidebar').classList.add('collapsed');
+  document.getElementById('hamburger-btn').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('visible');
+}
+function closeSidebarMobile() {
+  if (window.innerWidth <= 768) closeSidebar();
+}
+
+// ════════════════════════════════════════════════════════
+//  TAB SWITCHING
+// ════════════════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.nav-item[data-tab]').forEach(el => el.classList.toggle('active', el.dataset.tab===tab));
+  document.querySelectorAll('.page').forEach(el => el.classList.toggle('active', el.id==='page-'+tab));
+  if (tab === 'settings') { settingsDraft = null; resetSettingsDraft(); }
+  closeSidebarMobile();
+  renderAll();
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER ALL
+// ════════════════════════════════════════════════════════
+function renderAll() {
+  renderMonthLabels();
+  renderDailyTable('somtam');
+  renderDailyTable('grocery');
+  renderWallet();
+  renderStaff();
+  renderDashboard();
+  renderLog();
+  renderSettingsPage();
+  populateDynamicSelects();
+  // Show/hide add forms for viewer
+  const canEdit = !isViewer();
+  ['somtam-form','grocery-form'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = canEdit ? '' : 'none';
+  });
+}
+
+// ════════════════════════════════════════════════════════
+//  ADMIN SETTINGS PAGE
+// ════════════════════════════════════════════════════════
+
+// ─ Populate dynamic <select> elements across the app ─
+function populateDynamicSelects() {
+  // Expense type select
+  const expSel = document.getElementById('exp-type');
+  if (expSel) {
+    const cur = expSel.value;
+    expSel.innerHTML = getExpenseCategories().map(c => '<option value="' + c + '">' + c + '</option>').join('');
+    if (cur) expSel.value = cur;
+  }
+  // Staff name select (wages)
+  const wSel = document.getElementById('w-name');
+  if (wSel) {
+    const cur = wSel.value;
+    wSel.innerHTML = getStaffNames().map(n => '<option>' + n + '</option>').join('');
+    if (cur) wSel.value = cur;
+  }
+}
+
+// ─ Render the Settings page ─
+let settingsDraft = null; // working copy while editing
+
+function renderSettingsPage() {
+  // Always sync draft from live data when rendering
+  if (!settingsDraft) resetSettingsDraft();
+
+  // 1. Staff list
+  const staffEl = document.getElementById('staff-settings-list');
+  if (staffEl) {
+    staffEl.innerHTML = settingsDraft.staffList.map((s, i) =>
+      '<div class="staff-settings-row">'
+      + '<input class="staff-sn-input" type="text" value="' + s.name + '" placeholder="ชื่อ" oninput="settingsDraft.staffList[' + i + '].name=this.value">'
+      + '<input class="staff-rate-input" type="number" value="' + s.rate + '" min="0" oninput="settingsDraft.staffList[' + i + '].rate=Number(this.value)||0">'
+      + '<span class="rate-unit">฿/วัน</span>'
+      + '<button class="btn-icon" title="ลบ" onclick="removeStaffSetting(' + i + ')" style="flex-shrink:0">'
+      + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>'
+      + '</button>'
+      + '</div>'
+    ).join('');
+  }
+
+  // 2. Category tags
+  const catEl = document.getElementById('cat-list');
+  if (catEl) {
+    catEl.innerHTML = settingsDraft.expenseCategories.map((c, i) =>
+      '<span class="cat-tag">' + c
+      + '<button class="cat-tag-del" title="ลบ" onclick="removeCategorySetting(' + i + ')">×</button>'
+      + '</span>'
+    ).join('');
+  }
+
+  // 3. Share pct grid
+  const shareEl = document.getElementById('share-settings-grid');
+  if (shareEl) {
+    const names = [getAccounts().owner1?.name||'เจ้าของ 1', getAccounts().owner2?.name||'เจ้าของ 2'];
+    const keys = ['o1','o2'];
+    shareEl.innerHTML = keys.map((k, i) =>
+      '<div class="share-settings-row">'
+      + '<span class="share-settings-label">' + names[i] + '</span>'
+      + '<input class="share-pct-input" type="number" min="0" max="100" value="' + (settingsDraft.sharePct[k]||0) + '" oninput="settingsDraft.sharePct[\'' + k + '\']=Number(this.value)||0;updateSharePreview()">'
+      + '<span class="share-pct-unit">%</span>'
+      + '</div>'
+    ).join('');
+    const sum = (settingsDraft.sharePct.o1||0)+(settingsDraft.sharePct.o2||0);
+    shareEl.innerHTML += '<div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.3rem">'
+      + '<span class="share-pct-sum ' + (sum===100?'ok':'bad') + '">รวม ' + sum + '%' + (sum===100?' ✓':' ≠ 100') + '</span>'
+      + '</div>';
+    updateSharePreview();
+  }
+}
+
+function updateSharePreview() {
+  const el = document.getElementById('share-preview-box');
+  if (!el || !settingsDraft) return;
+  const p1 = (settingsDraft.sharePct.o1||0)/100;
+  const p2 = (settingsDraft.sharePct.o2||0)/100;
+  const s1 = Math.round(data.savings * p1);
+  const s2 = Math.round(data.savings * p2);
+  const n1 = getAccounts().owner1?.name||'เจ้าของ 1';
+  const n2 = getAccounts().owner2?.name||'เจ้าของ 2';
+  el.innerHTML = '<span style="font-size:0.75rem;opacity:0.7">ตัวอย่าง (จากยอดสะสมปัจจุบัน ' + fmtB(data.savings) + ')</span>'
+    + '<div class="share-preview-item"><div class="share-preview-name">' + n1 + '</div><div class="share-preview-amt">' + fmtB(s1) + '</div></div>'
+    + '<div class="share-preview-item"><div class="share-preview-name">' + n2 + '</div><div class="share-preview-amt">' + fmtB(s2) + '</div></div>';
+}
+
+function resetSettingsDraft() {
+  settingsDraft = {
+    staffList: JSON.parse(JSON.stringify(getStaffList())),
+    expenseCategories: [...getExpenseCategories()],
+    sharePct: { o1: data.sharePct.o1||50, o2: data.sharePct.o2||50 },
+  };
+}
+
+function addStaffSetting() {
+  if (guardViewer()) return;
+  const name = document.getElementById('new-staff-name').value.trim();
+  const rate = parseFloat(document.getElementById('new-staff-rate').value)||0;
+  if (!name) { showToast('กรุณากรอกชื่อพนักงาน','error'); return; }
+  if (!settingsDraft) resetSettingsDraft();
+  settingsDraft.staffList.push({name, rate});
+  document.getElementById('new-staff-name').value = '';
+  document.getElementById('new-staff-rate').value = '';
+  renderSettingsPage();
+}
+function removeStaffSetting(i) {
+  if (guardViewer()) return;
+  if (!settingsDraft) resetSettingsDraft();
+  settingsDraft.staffList.splice(i,1);
+  renderSettingsPage();
+}
+function addCategorySetting() {
+  if (guardViewer()) return;
+  const val = document.getElementById('new-cat-input').value.trim();
+  if (!val) { showToast('กรุณากรอกชื่อหมวดหมู่','error'); return; }
+  if (!settingsDraft) resetSettingsDraft();
+  if (settingsDraft.expenseCategories.includes(val)) { showToast('มีหมวดนี้แล้ว','error'); return; }
+  settingsDraft.expenseCategories.push(val);
+  document.getElementById('new-cat-input').value = '';
+  renderSettingsPage();
+}
+function removeCategorySetting(i) {
+  if (guardViewer()) return;
+  if (!settingsDraft) resetSettingsDraft();
+  settingsDraft.expenseCategories.splice(i,1);
+  renderSettingsPage();
+}
+
+function saveAllSettings() {
+  if (guardViewer()) return;
+  if (!settingsDraft) return;
+  const sum = (settingsDraft.sharePct.o1||0)+(settingsDraft.sharePct.o2||0);
+  if (sum !== 100) { showToast('สัดส่วนรวมต้องเท่ากับ 100% (' + sum + '%)','error'); return; }
+  if (!settingsDraft.staffList.length) { showToast('ต้องมีพนักงานอย่างน้อย 1 คน','error'); return; }
+  if (!settingsDraft.expenseCategories.length) { showToast('ต้องมีหมวดหมู่อย่างน้อย 1 รายการ','error'); return; }
+
+  saveUndoSnapshot();
+  data.staffList = JSON.parse(JSON.stringify(settingsDraft.staffList));
+  data.expenseCategories = [...settingsDraft.expenseCategories];
+  data.sharePct = { ...settingsDraft.sharePct };
+  saveData();
+  settingsDraft = null; // reset draft
+  addLog('บันทึกการตั้งค่าระบบ', 'พนักงาน ' + data.staffList.length + ' คน, หมวด ' + data.expenseCategories.length + ', แบ่งหุ้น ' + data.sharePct.o1 + '/' + data.sharePct.o2);
+  renderAll();
+  showToast('บันทึกการตั้งค่าสำเร็จ ✓','success');
+}
+
+// ════════════════════════════════════════════════════════
+//  MODAL
+// ════════════════════════════════════════════════════════
+let modalCallback = null;
+function openModal(title, desc, cb) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-desc').textContent = desc;
+  modalCallback = cb;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  modalCallback = null;
+}
+document.getElementById('modal-confirm-btn').addEventListener('click', () => {
+  if (modalCallback) modalCallback();
+  closeModal();
+});
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target===document.getElementById('modal-overlay')) closeModal();
+});
+
+// ════════════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg, type='info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show '+type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3000);
+}
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+function init() {
+  loadData();
+  initLogo();
+  renderLoginButtons();
+  const today = todayISO();
+  ['s-date','g-date','exp-date','w-week-end'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = today;
+  });
+  populateDynamicSelects();
+  // Load share pct into wallet page inputs (legacy compat)
+  if (data.sharePct) {
+    const el1 = document.getElementById('share-pct1');
+    const el2 = document.getElementById('share-pct2');
+    if (el1) el1.value = data.sharePct.o1||50;
+    if (el2) el2.value = data.sharePct.o2||50;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
