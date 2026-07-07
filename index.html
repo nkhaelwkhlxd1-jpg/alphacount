@@ -1607,7 +1607,7 @@ function doUndo(){
   const last=state.undoStack.pop();
   const snap=JSON.parse(last.snapshot);
   // restore relevant keys
-  ['entries','expenses','wages','wagePayouts','poolBalance','savingBalance','wageHold'].forEach(k=>{
+  ['entries','expenses','wages','wagePayouts','poolBalance','savingBalance','savingShop','savingHome','wageHold'].forEach(k=>{
     if(snap[k]!==undefined) state[k]=snap[k];
   });
   save();
@@ -1990,7 +1990,7 @@ function refreshData(){
         // merge รายการแบบไม่ทิ้งของเครื่องนี้ แล้วค่อยรับยอดเงิน/ตั้งค่าจาก Firebase
         mergeRemoteIntoState(data);
         const rest=Object.assign({},data);
-        ['entries','expenses','wages','history','employees','expCats'].forEach(k=>delete rest[k]);
+        ['entries','expenses','wages','history','employees','expCats','currentYear','currentMonth'].forEach(k=>delete rest[k]);
         Object.assign(state,rest);
         state.sheetsUrl='https://alpha-a0554-default-rtdb.firebaseio.com';
         // Save to localStorage only — don't push back
@@ -3480,7 +3480,7 @@ function autoSyncOnLoad(){
         mergeRemoteIntoState(data);
         // ค่าอื่น ๆ (ยอดเงิน/ตั้งค่า) ใช้ของ Firebase เป็นหลักเหมือนเดิม
         const rest=Object.assign({},data);
-        ['entries','expenses','wages','history','employees','expCats'].forEach(k=>delete rest[k]);
+        ['entries','expenses','wages','history','employees','expCats','currentYear','currentMonth'].forEach(k=>delete rest[k]);
         Object.assign(state,rest);
         state.sheetsUrl=url||'https://alpha-a0554-default-rtdb.firebaseio.com';
         try{localStorage.setItem('alphacount_v2',JSON.stringify(state));}catch(e){}
@@ -3508,7 +3508,7 @@ function pullFromSheets(){
         // merge รายการแบบไม่ทิ้งของเครื่องนี้ แล้วค่อยรับค่ายอดเงิน/ตั้งค่าจาก Firebase
         mergeRemoteIntoState(data);
         const rest=Object.assign({},data);
-        ['entries','expenses','wages','history','employees','expCats'].forEach(k=>delete rest[k]);
+        ['entries','expenses','wages','history','employees','expCats','currentYear','currentMonth'].forEach(k=>delete rest[k]);
         Object.assign(state,rest);
         state.sheetsUrl=url||'https://alpha-a0554-default-rtdb.firebaseio.com';
         // Save to localStorage only (no push back to Firebase)
@@ -3986,6 +3986,10 @@ function init(){
   document.getElementById('grocery-holiday-date').value=today();
   document.getElementById('exp-date').value=today();
   document.getElementById('wage-sunday').value=today();
+  // เปิดแอปทีไร ให้เริ่มที่ "เดือนปัจจุบันจริง" เสมอ ไม่เอาเดือนที่เคยเลื่อนดูค้างไว้
+  // (จาก localStorage หรือจากเครื่องอื่นที่ซิงค์ผ่าน Firebase) มาทับ
+  state.currentYear=new Date().getFullYear();
+  state.currentMonth=new Date().getMonth()+1;
   renderDashboard();
   autoSyncOnLoad();
 }
